@@ -44,5 +44,31 @@ namespace Lobot{
 
             lobot_obj.transform.position += new Vector3(0f, 0.6f, 0f);
         }
+
+
+        public override void onUpdate()
+        {
+            base.onUpdate();
+
+            foreach (int action in lobot.action_stack){
+
+                switch (action){
+                    case (int)ActionType.FORWARD_MOVE:
+                        MoveLobot(0, 1);
+                        break;
+                    case (int)ActionType.BACKWARD_MOVE:
+                        MoveLobot(0, -1);
+                        break;
+                    case (int)ActionType.RIGHT_MOVE:
+                        MoveLobot(1, 0);
+                        break;
+                    case (int)ActionType.LEFT_MOVE:
+                        MoveLobot(-1, 0);
+                        break;
+                }
+            }
+
+            lobot.action_stack.Clear();
+        }
     }
 }

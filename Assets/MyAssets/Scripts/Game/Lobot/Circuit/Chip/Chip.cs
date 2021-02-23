@@ -22,8 +22,8 @@ namespace Lobot{
         }
 
         ///<summary> チップの機能を実行する。 </summary>
-        public virtual bool Execute(Lobot lobot){
-            return false;
+        public virtual int Execute(){
+            return 0;
         }
 
         public Chip(ChipType _type){

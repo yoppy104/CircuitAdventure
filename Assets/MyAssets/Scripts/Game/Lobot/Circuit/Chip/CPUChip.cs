@@ -11,9 +11,13 @@ namespace Lobot{
 
         }
 
-        public override bool Execute(Lobot lobot)
+        public override int Execute()
         {
-            return false;
+            if (is_sensor_connect){
+
+            }
+
+            return 0;
         }
     }
 }

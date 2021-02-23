@@ -8,13 +8,19 @@ namespace Lobot{
     public class MoveChip : Chip
     {
         // 移動量
-        public Vector2Int deltaMove{
+        public int actionType{
             get;
             set;
-        } = Vector2Int.zero;
+        } = -1;
 
-        public MoveChip(Vector2Int delta) : base(ChipType.ACTION){
-            deltaMove = delta;
+        public MoveChip(ActionType _action) : base(ChipType.ACTION){
+            actionType = (int)_action;
+        }
+
+        ///<summary> 実行 </summary>
+        public override int Execute()
+        {
+            return actionType;
         }
     }
 }

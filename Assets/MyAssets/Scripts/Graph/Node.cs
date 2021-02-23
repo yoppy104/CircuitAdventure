@@ -11,7 +11,7 @@ namespace Graph{
 
         /// <summary> 次のノードを返却 </summary>
         public Node Next(int id){
-            if (id > next.Count) return null;
+            if (id >= next.Count) return null;
             return next[id];
         }
 
