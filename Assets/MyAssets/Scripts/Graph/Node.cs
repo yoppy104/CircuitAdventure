@@ -23,5 +23,9 @@ namespace Graph{
         public Node() {
 
         }
+
+        public Node(System.Object obj){
+            content = obj;
+        }
     }
 }
