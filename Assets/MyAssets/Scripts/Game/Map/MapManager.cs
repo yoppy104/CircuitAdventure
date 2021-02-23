@@ -21,10 +21,15 @@ namespace Map{
             player_locate = new Vector2Int(x, y);
         }
 
-        public void MovePlayer(int dx, int dy){
-            player_locate.x += dx;
-            player_locate.y += dy;
-        }
+        ///<summary> 指定座標が移動可能か判定する </summary>
+        public bool IsMoveable(int x, int y){
+            // タイル配列の範囲内かを判定
+            if (x < 0 || y < 0) return false;
+            if (x >= limit_x || y >= limit_y) return false;
+
+            // タイルが移動可能かどうかを判定
+            return tiles[x, y].isMoveable;
+        } 
 
         public override void onStart()
         {

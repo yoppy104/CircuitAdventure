@@ -10,9 +10,6 @@ namespace Map{
     }
 
     public class MapTile{
-        
-        public const float TILE_SIZE_X = 0.5f;
-        public const float TILE_SIZE_Y = 0.5f;
 
         // タイルを配置する座標
         public Vector2Int Position{
@@ -41,6 +38,7 @@ namespace Map{
             set;
         } = null;
 
+
         ///<summary> プレハブのインスタンス化 </summary>
         public void Generate(Transform parent){
             if (prefab == null) return;
@@ -49,11 +47,13 @@ namespace Map{
             obj = MonoBehaviour.Instantiate(prefab) as GameObject;
 
             // ローカル座標の初期化
-            obj.transform.position = new Vector3(Position.x * TILE_SIZE_X * 10, 0f, Position.y * TILE_SIZE_Y * 10);
-            obj.transform.localScale = new Vector3(TILE_SIZE_X, 1f, TILE_SIZE_Y);
+            obj.transform.position = MapCommon.MapScale2WorldScale(Position);
+            obj.transform.localScale = MapCommon.TILE_SCALE;
 
+            // 親オブジェクトの登録
             obj.transform.parent = parent;
         }
+
 
         ///<summary> マップの1マスを表す </summary>
         public MapTile(int x, int y, MapType type){

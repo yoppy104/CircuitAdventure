@@ -33,7 +33,10 @@ namespace MainSystem{
             if (is_set_main_loop) return;
 
             MainLoop instance = MainLoop.Instance;
-            if (instance != null) instance.AddBehaviour(this);
+            if (instance != null) {
+                instance.AddBehaviour(this);
+                is_set_main_loop = true;
+            }
         }
 
         public void Awake(){
@@ -47,7 +50,7 @@ namespace MainSystem{
         }
 
         public void Update(){
-            SetMainLoop();
+
         }
     }
 }
