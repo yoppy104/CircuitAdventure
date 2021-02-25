@@ -34,7 +34,7 @@ namespace MyInput{
         ///<summary> 左クリックを押したときの判定(マウスポジションで返却) </summary>
         public static Vector3 CheckMouseLeftDown(){
             if(Input.GetMouseButtonDown(0)){
-                return Input.mousePosition;
+                return MousePosOnWorld();
             }else{
                 return new Vector3(-1, -1, -1);
             }
@@ -43,7 +43,7 @@ namespace MyInput{
         ///<summary> 左クリックを離したときの判定 </summary>
         public static Vector3 CheckMouseLeftUp(){
             if (Input.GetMouseButtonUp(0)){
-                return Input.mousePosition;
+                return MousePosOnWorld();
             }else{
                 return new Vector3(-1, -1, -1);
             }
@@ -52,7 +52,7 @@ namespace MyInput{
         ///<summary> 右クリックを押したときの判定（マウスポジションで返却) </summary>
         public static Vector3 CheckMouseRightDown(){
             if (Input.GetMouseButtonDown(1)){
-                return Input.mousePosition;
+                return MousePosOnWorld();
             }else{
                 return new Vector3(-1, -1, -1);
             }
@@ -62,10 +62,18 @@ namespace MyInput{
         ///<summary> 右クリックを離したときの判定（マウスポジションで返却) </summary>
         public static Vector3 CheckMouseRightUp(){
             if (Input.GetMouseButtonUp(1)){
-                return Input.mousePosition;
+                return MousePosOnWorld();
             }else{
                 return new Vector3(-1, -1, -1);
             }
+        }
+
+        public static Vector3 MousePosOnWorld(float distance_rate=0){
+            Debug.Log(distance_rate);
+            Vector3 pos = Input.mousePosition;
+            pos.z = 10f + distance_rate;
+            Vector3 res = Camera.main.ScreenToWorldPoint(pos);
+            return res;
         }
 
         // 長押し時間管理
