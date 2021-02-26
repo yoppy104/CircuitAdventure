@@ -33,11 +33,21 @@ namespace Lobot{
             protected set;
         }
 
+        public int NumConnect{
+            get;
+            set;
+        } = 0;
+
         // 使用中かどうか
         public bool isUse{
             get;
             protected set;
         }
+
+        public EditCircuit.ChipUI UI{
+            get;
+            set;
+        } = null;
 
         ///<summary> チップの機能を実行する。 </summary>
         public virtual int Execute(){
