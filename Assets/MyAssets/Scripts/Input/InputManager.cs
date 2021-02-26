@@ -3,6 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace MyInput{
+
+    ///<sumamry> マウス判定の返却用クラス </summary>
+    public class RetMouse{
+        public bool isTouch;
+        public Vector3 mousePos;
+
+        public RetMouse(bool is_touch, Vector3 pos){
+            isTouch = is_touch;
+            mousePos = pos;
+        }
+
+        public static RetMouse Failure{
+            get;
+        } = new RetMouse(false, Vector3.zero);
+    }
+
     public static class InputManager
     {
         /// <summary> 上方向の入力がされたかを判定 </summary>
@@ -31,49 +47,71 @@ namespace MyInput{
         }
 
 
-        ///<summary> 左クリックを押したときの判定(マウスポジションで返却) </summary>
-        public static Vector3 CheckMouseLeftDown(){
-            if(Input.GetMouseButtonDown(0)){
-                return MousePosOnWorld();
-            }else{
-                return new Vector3(-1, -1, -1);
+        ///<summary> 左クリックを押しているときの判定 </summary>
+        public static RetMouse CheckMouseLeft(bool is_raw=false){
+            if (is_raw){
+                return new RetMouse(Input.GetMouseButton(0), RawMousePos());
             }
+            return new RetMouse(Input.GetMouseButton(0), MousePosOnWorld());
+        }
+
+        ///<summary> 左クリックを押したときの判定</summary>
+        public static RetMouse CheckMouseLeftDown(bool is_raw=false){
+            if (is_raw){
+                return new RetMouse(Input.GetMouseButtonDown(0), RawMousePos());
+            }
+            return new RetMouse(Input.GetMouseButtonDown(0), MousePosOnWorld());
         }
 
         ///<summary> 左クリックを離したときの判定 </summary>
-        public static Vector3 CheckMouseLeftUp(){
-            if (Input.GetMouseButtonUp(0)){
-                return MousePosOnWorld();
-            }else{
-                return new Vector3(-1, -1, -1);
+        public static RetMouse CheckMouseLeftUp(bool is_raw=false){
+            if (is_raw){
+                return new RetMouse(Input.GetMouseButtonUp(0), RawMousePos());
             }
+            return new RetMouse(Input.GetMouseButtonUp(0), MousePosOnWorld());
         }
 
-        ///<summary> 右クリックを押したときの判定（マウスポジションで返却) </summary>
-        public static Vector3 CheckMouseRightDown(){
-            if (Input.GetMouseButtonDown(1)){
-                return MousePosOnWorld();
-            }else{
-                return new Vector3(-1, -1, -1);
+        ///<summary> 右クリックを押しているときの判定 </summary>
+        public static RetMouse CheckMouseRight(bool is_raw=false){
+            if (is_raw){
+                return new RetMouse(Input.GetMouseButton(1), RawMousePos());
             }
+            return new RetMouse(Input.GetMouseButton(1), MousePosOnWorld());
+        }
+
+        ///<summary> 右クリックを押したときの判定 </summary>
+        public static RetMouse CheckMouseRightDown(bool is_raw=false){
+            if (is_raw){
+                return new RetMouse(Input.GetMouseButtonDown(1), RawMousePos());
+            }
+            return new RetMouse(Input.GetMouseButtonDown(1), MousePosOnWorld());
         }
 
 
-        ///<summary> 右クリックを離したときの判定（マウスポジションで返却) </summary>
-        public static Vector3 CheckMouseRightUp(){
-            if (Input.GetMouseButtonUp(1)){
-                return MousePosOnWorld();
-            }else{
-                return new Vector3(-1, -1, -1);
+        ///<summary> 右クリックを離したときの判定 </summary>
+        public static RetMouse CheckMouseRightUp(bool is_raw=false){
+            if (is_raw){
+                return new RetMouse(Input.GetMouseButtonUp(1), RawMousePos());
             }
+            return new RetMouse(Input.GetMouseButtonUp(1), MousePosOnWorld());
         }
 
+        ///<summary> 右左どちらかのマウスボタンが押された </summary>
+        public static bool CheckClickLeftOrRight(){
+            return Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1);
+        }
+
+        ///<summary> ワールド座標に直したマウス位置を返す </summary>
         public static Vector3 MousePosOnWorld(float distance_rate=0){
-            Debug.Log(distance_rate);
-            Vector3 pos = Input.mousePosition;
+            Vector3 pos = RawMousePos();
             pos.z = 10f + distance_rate;
             Vector3 res = Camera.main.ScreenToWorldPoint(pos);
             return res;
+        }
+
+        ///<summary> 生のマウス座標を返す </summary>
+        public static Vector3 RawMousePos(){
+            return Input.mousePosition;
         }
 
         // 長押し時間管理

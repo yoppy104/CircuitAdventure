@@ -1,8 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MyInput;
 
 namespace EditCircuit{
+
+    ///<summary> チップを離した時に走る処理の返却クラス </summary>
+    public class RetDropChip{
+        public bool isHit;
+        public Vector3 setPos;
+
+        public RetDropChip(bool hit, Vector3 pos){
+            isHit = hit;
+            setPos = pos;
+        }
+    }
+
     ///<summary> 回路編集画面を管理する。 </summary>
     public class EditCircuitManager : MonoBehaviour
     {
@@ -12,7 +25,6 @@ namespace EditCircuit{
         public const string NAME_LEFT_CHIP = "MoveChip_Left";
         public const string NAME_CPU_CHIP = "CPUChip";
         public const string NAME_BACK_GROUND = "BG";
-
 
         // ui
         private EditCircuitUI ui = null;
@@ -35,7 +47,30 @@ namespace EditCircuit{
             factory.ui_prefabs.Add(NAME_RIGHT_CHIP, Resources.Load("Prefab/Lobot/Chip/MoveChip_Right"));
             factory.ui_prefabs.Add(NAME_LEFT_CHIP, Resources.Load("Prefab/Lobot/Chip/MoveChip_Left"));
 
-            factory.ui_prefabs.Add(NAME_BACK_GROUND, Resources.Load("Prefab/BG/BG_EditCircuit"));  
+            factory.ui_prefabs.Add(NAME_BACK_GROUND, Resources.Load("Prefab/BG/BG_EditCircuit"));
+
+
+            // CPUChipをセンター配置
+            var temp = factory.GetObject(EditCircuitManager.NAME_CPU_CHIP, EditCircuitUI.CPU_STANDARD_POSITION, transform);
+            var script = temp.GetComponent<ChipUI>();
+            ui.useChips.Add(script);
+
+            // // UIManagerのドロップ時処理を追加する。
+            // ui.SetOnDropChip((chip) => {
+
+            // });
+
+            // // UIManagerでチップを非アクティブ状態にした時に走る処理
+            // ui.SetOnDisactiveChipUI((chip) => {
+
+            // });
+
+            // // ChipUIをドラッグ状態にした時の処理を追加
+            // ui.SetOnDrag((chip) => {
+
+            // });
         }
+
+
     }
 }

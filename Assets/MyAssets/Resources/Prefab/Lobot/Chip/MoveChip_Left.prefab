@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 5379048578038347218}
   - component: {fileID: 7024277445741152228}
   - component: {fileID: 8029407124076536067}
-  m_Layer: 0
+  - component: {fileID: 6645212427941478629}
+  m_Layer: 8
   m_Name: MoveChip_Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -126,6 +127,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c250b62918d268b49a56e4927ab16981, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6645212427941478629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5379048578038347219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Delegates: []
 --- !u!1 &7024277444355747912
 GameObject:
   m_ObjectHideFlags: 0
@@ -136,7 +150,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7024277444355747913}
   - component: {fileID: 7024277444355747914}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: left_connecter_image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -218,7 +232,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7024277445244228100}
   - component: {fileID: 7024277445244228101}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: down_connecter_image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -300,7 +314,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7024277445551205638}
   - component: {fileID: 7024277445551205639}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: up_connecter_image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -382,7 +396,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7024277445611746253}
   - component: {fileID: 7024277445611746254}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: right_connecter_image
   m_TagString: Untagged
   m_Icon: {fileID: 0}

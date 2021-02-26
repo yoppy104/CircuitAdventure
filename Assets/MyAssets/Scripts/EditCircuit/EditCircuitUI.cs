@@ -12,14 +12,20 @@ namespace EditCircuit{
     {
         // チップを配置できる上限値
         public readonly static Dictionary<string, float> LIMIT_UI_SPACE = new Dictionary<string, float>(){
-            {"max x", 8.6f},
-            {"min x", -10.6f},
-            {"max y", 4.8f},
-            {"min y", -4.8f}
+            {"max x", 9f},
+            {"min x", -11f},
+            {"max y", 5f},
+            {"min y", -5f}
         };
 
         // チップを並べるときの距離
         public const float DISTANCE_CHIP = 1.6f;
+
+        
+        public List<ChipUI> useChips{
+            get;
+            private set;
+        } = new List<ChipUI>();
 
         // CPUチップの基本位置
         public readonly static Vector3 CPU_STANDARD_POSITION = new Vector3(-1, 0, 0);
@@ -29,23 +35,51 @@ namespace EditCircuit{
         [SerializeField] EventTrigger left_chip_button = null;
         [SerializeField] EventTrigger down_chip_button = null;
 
+        public EventTrigger UpChipButton { get { return up_chip_button; }}
+        public EventTrigger RightChipButton { get { return right_chip_button; }}
+        public EventTrigger LeftChipButton { get { return left_chip_button; }}
+        public EventTrigger DownChipButton { get { return down_chip_button; }}
+
+
+        [SerializeField] GameObject chip_config = null;
+
+        private Button config_delete = null;
+
+
         public ChipUIFactory factory {
             get; set;
         } = null;
 
         // 現在ドラッグしているUI
         private ChipUI now_drag = null;
+        private ChipUI now_selected = null;
+
+        private Action<ChipUI> onDrag = null;
+        public void SetOnDrag(Action<ChipUI> action){
+            onDrag = action;
+        }
 
         ///<summary> ChipUIオブジェクトをドラッグ状態にする。 </summary>
-        private void SetDrag(GameObject obj){
-            // コンポーネントのnullチェック
-            var src = obj.GetComponent<ChipUI>();
-            if (src == null) return;
+        private void SetDrag(ChipUI chip){
+            if (chip == null) return;
 
             // ドラッグモードに変更
-            src.ActivateChase();
-            now_drag = src;
-            src.SetScale(ChipUI.STANDARD_DRAG_SCALE);
+            chip.ActivateChase();
+            now_drag = chip;
+            chip.SetScale(ChipUI.STANDARD_DRAG_SCALE);
+
+            if (onDrag != null){
+                onDrag(chip);
+            }
+
+            RemoveChipUI(chip);
+        }
+
+        ///<summary> 使用中チップリストから削除する </summary>
+        private void RemoveChipUI(ChipUI chip){
+            if (useChips.Contains(chip)){
+                useChips.Remove(chip);
+            }
         }
 
         
@@ -58,30 +92,156 @@ namespace EditCircuit{
             return (x_min > x || x > x_max) || (y_min > y || y > y_max);
         }
 
+        ///<summary> 操作範囲を超えているかどうか判定する。 </summary>
+        private bool CheckLimitOver(ChipUI chip){
+            float x_min = LIMIT_UI_SPACE["min x"];
+            float y_min = LIMIT_UI_SPACE["min y"];
+            float x_max = LIMIT_UI_SPACE["max x"];
+            float y_max = LIMIT_UI_SPACE["max y"];
+
+            ChipUI.Corner corner = chip.GetCorner();
+
+            // 4辺の接触判定
+            Vector2[] checks = new Vector2[8]{
+                new Vector2(x_min, corner.top.y),
+                new Vector2(x_min, corner.bottom.y),
+                new Vector2(corner.top.x, y_min),
+                new Vector2(corner.bottom.x, y_min),
+                new Vector2(x_max, corner.top.y),
+                new Vector2(x_max, corner.bottom.y),
+                new Vector2(corner.top.x, y_max),
+                new Vector2(corner.bottom.x, y_max)
+            };
+            
+            // どこかの座標が入っていたら、範囲を超えている。
+            foreach (Vector2 check in checks){
+                if (chip.CheckOnPoint(check)){
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        ///<summary> チップを非アクティブにする処理 </summary>
+        private void DisactiveChipUI(ChipUI chip){
+            chip.FreezePos();
+            chip.gameObject.SetActive(false);
+            if (onDisactiveChipUI != null){
+                onDisactiveChipUI(chip);
+            }
+
+            int index = -1;
+
+                for (int ind = 0; ind < useChips.Count; ind++){
+                    if (chip == useChips[ind]){
+                        index = ind;
+                        break;
+                    }
+                }
+
+                if (index != -1){
+                    useChips.RemoveAt(index);
+                }
+        }
+
+        // チップを非アクティブにした時に走る処理(Managerから登録すること前提)
+        private Action<ChipUI> onDisactiveChipUI = null;
+        public void SetOnDisactiveChipUI(Action<ChipUI> action){
+            onDisactiveChipUI = action;
+        }
+
+        ///<summary> ChipUIを左クリックした時の処理を追加する。</summary>
+        private void SetLeftClickActionToChipUI(ChipUI chip){
+            // EventTriggerがアタッチされていないなら終了
+            EventTrigger trigger = chip.Trigger;
+            if (trigger == null) return;
+
+            Vector3 pos = chip.transform.position;
+
+            EventTrigger.Entry press = new EventTrigger.Entry();
+            press.eventID = EventTriggerType.PointerDown;
+            press.callback.AddListener((data) => {
+                Debug.Log("on click chip ui");
+
+                // 左クリック
+                // ドラッグ状態に変更
+                if (InputManager.CheckMouseLeft().isTouch) {
+                    Debug.Log("left click");
+                    SetDrag(chip);
+                }
+                
+                // 右クリック
+                // コンフィグを表示
+                else if (InputManager.CheckMouseRight().isTouch) {
+                    Debug.Log("right click");
+                    chip_config.SetActive(true);
+                }
+            });
+            
+            trigger.triggers.Add(press);
+        }
+
+        ///<summary> ドロップしたチップの設置座標を計算する</summary>
+        private Vector3 CalcSetPosition(ChipUI chip){
+            // 最も近いチップを参照する。
+            ChipUI nearest = FindNearestChipUI(chip);
+
+            // 接触したチップが存在しないなら、そのまま返す。
+            if (nearest == null){
+                DisactiveChipUI(chip);
+
+                // なんであれドラッグ状態は解除する。
+                now_drag = null;
+                return Vector3.zero;
+            }
+
+            // 最も適した設置方向を計算する。
+            Vector3 set_pos = CalcSettingPos(
+                chip.transform.position,
+                nearest.transform.position
+            );
+
+            return set_pos;
+        }
+
         ///<summary> チップを離した時の処理 </summary>
         private void DropChip(Vector3 pos){
 
-            // UI範囲を超えているなら、処理を終了。
-            if (CheckLimitOver(pos.x, pos.y)) {
+            // サイズを固定用に変更して、固定モードにする。
+            now_drag.SetScale(ChipUI.STANDARD_SCALE);
+
+            // ドロップした座標を設定
+            now_drag.SetPosition3D(pos);
+
+            // 配置する座標を計算
+            Vector3 set_pos = CalcSetPosition(now_drag);
+
+            // 内部でドラッグ状態が解除されているなら、終了
+            if (now_drag == null) return;
+
+            now_drag.SetPosition3D(set_pos);
+            
+            // UI範囲を超えているなら、非アクティブにして終了。
+            if (CheckLimitOver(now_drag)) {
                 // 画面外なので非アクティブ
-                now_drag.gameObject.SetActive(false);
-                now_drag.FreezePos();
+                DisactiveChipUI(now_drag);
 
                 // なんであれドラッグ状態は解除する。
                 now_drag = null;
                 return;
             }
 
-            // 位置とサイズを合わせて、座標を固定する。
-            now_drag.SetPosition3D(pos);
-            now_drag.SetScale(ChipUI.STANDARD_SCALE);
+            // 位置を固定
             now_drag.FreezePos();
-
+            
+            // 使用中チップ配列に登録
+            useChips.Add(now_drag);
             now_drag = null;
         }
 
         ///<summary> ボタンを押したときの処理を追加する </summary>
-        private void SetClickDown(EventTrigger trigger, UnityEngine.Events.UnityAction<BaseEventData> onclick){
+        public void SetClickDown(EventTrigger trigger, UnityEngine.Events.UnityAction<BaseEventData> onclick){
 
             EventTrigger.Entry press = new EventTrigger.Entry();
             press.eventID = EventTriggerType.PointerDown;
@@ -90,37 +250,90 @@ namespace EditCircuit{
             trigger.triggers.Add(press);
         }
 
+        // チップをドロップしたときに行う処理をManagerから渡す。
+        private Func<ChipUI, RetDropChip> onDropChipFromManager = null;
+
+
+        public void SetOnDropChip(Func<ChipUI, RetDropChip> func){
+            onDropChipFromManager = func;
+        }
+
         // Start is called before the first frame update
         void Start()
         {
-            // ChipUIを生成するボタンの登録
-            SetClickDown(up_chip_button, (data) => {
-                // 左クリックで押していないなら何もしない
-                if (InputManager.CheckMouseLeftDown().x == -1) return;
-               var temp = factory.GetObject(EditCircuitManager.NAME_UP_CHIP, InputManager.MousePosOnWorld(-3), transform);
-                SetDrag(temp);
-            } );
-            SetClickDown(right_chip_button, (data) => {
-                // 左クリックで押していないなら何もしない
-                if (InputManager.CheckMouseLeftDown().x == -1) return;
-                var temp = factory.GetObject(EditCircuitManager.NAME_RIGHT_CHIP, InputManager.MousePosOnWorld(-3), transform);
-                SetDrag(temp);
-            } );
-            SetClickDown(left_chip_button, (data) => {
-                // 左クリックで押していないなら何もしない
-                if (InputManager.CheckMouseLeftDown().x == -1) return;
-                var temp = factory.GetObject(EditCircuitManager.NAME_LEFT_CHIP, InputManager.MousePosOnWorld(-3), transform);
-                SetDrag(temp);
-            } );
-            SetClickDown(down_chip_button, (data) => {
-                // 左クリックで押していないなら何もしない
-                if (InputManager.CheckMouseLeftDown().x == -1) return;
-                var temp = factory.GetObject(EditCircuitManager.NAME_DOWN_CHIP, InputManager.MousePosOnWorld(-3), transform);
-                SetDrag(temp);
-            } );
+            // chipの詳細設定メニュー
+            config_delete = chip_config.transform.GetChild(0).GetComponent<Button>();
+            config_delete.onClick.AddListener(() => {
+                Debug.Log("check");
+                DisactiveChipUI(now_selected);
+                HideChipConfig();
+                now_selected = null;
+            });
 
-            // CPUChipをセンター配置
-            var temp = factory.GetObject(EditCircuitManager.NAME_CPU_CHIP, CPU_STANDARD_POSITION, transform);
+            // ChipUIを生成するボタンの登録
+            SetClickDown(UpChipButton, (data) => {
+                // 左クリックで押していないなら何もしない
+                if (! InputManager.CheckMouseLeft().isTouch) return;
+               var temp = factory.GetObject(EditCircuitManager.NAME_UP_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                SetDrag(temp.GetComponent<ChipUI>());
+            } );
+            SetClickDown(RightChipButton, (data) => {
+                // 左クリックで押していないなら何もしない
+                if (! InputManager.CheckMouseLeft().isTouch) return;
+                var temp = factory.GetObject(EditCircuitManager.NAME_RIGHT_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                SetDrag(temp.GetComponent<ChipUI>());
+            } );
+            SetClickDown(LeftChipButton, (data) => {
+                // 左クリックで押していないなら何もしない
+                if (! InputManager.CheckMouseLeft().isTouch) return;
+                var temp = factory.GetObject(EditCircuitManager.NAME_LEFT_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                SetDrag(temp.GetComponent<ChipUI>());
+            } );
+            SetClickDown(DownChipButton, (data) => {
+                // 左クリックで押していないなら何もしない
+                if (! InputManager.CheckMouseLeft().isTouch) return;
+                var temp = factory.GetObject(EditCircuitManager.NAME_DOWN_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                SetDrag(temp.GetComponent<ChipUI>());
+            } );
+        }
+
+        ///<summary> クリック位置にChipUIがあるかをチェック </summary>
+        private ChipUI GetChipWithRay(Vector3 mouse_pos){
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            float distance = 100f;
+            LayerMask mask = LayerMask.GetMask("ChipUI");
+
+            var hit = Physics2D.Raycast((Vector2)ray.origin, (Vector2)ray.direction, distance, mask);
+
+            if (hit.collider == null) return null;
+            return hit.collider.GetComponent<ChipUI>();
+        }
+
+        ///<summary> 左クリックでChipUIを取得する。 </summary>
+        private ChipUI GetChipOnLeftMouseClick(){
+            var click = InputManager.CheckMouseLeftDown();
+            if (click.isTouch){
+                foreach (ChipUI chip in useChips){
+                    if (chip.CheckOnPoint(click.mousePos)){
+                        return chip;
+                    }
+                }
+            }
+            return null;
+        }
+
+        ///<summary> 右クリックでChipUIを取得する。 </summary>
+        private ChipUI GetChipOnRightMouseClick(){
+            var click = InputManager.CheckMouseRightDown();
+            if (click.isTouch){
+                foreach (ChipUI chip in useChips){
+                    if (chip.CheckOnPoint(click.mousePos)){
+                        return chip;
+                    }
+                }
+            }
+            return null;
         }
 
         // Update is called once per frame
@@ -128,14 +341,130 @@ namespace EditCircuit{
         {
             if (now_drag != null){
                 // 左クリックを離したら、その場所で固定する。
-                Vector3 pos = InputManager.CheckMouseLeftUp();
-                if (pos.x != -1){
-                    DropChip(pos);
+                RetMouse ret = InputManager.CheckMouseLeftUp();
+                if (ret.isTouch){
+                    DropChip(ret.mousePos);
                 }else{
                     now_drag.SetPosition3D(InputManager.MousePosOnWorld(-3));
                 }
 
+                return;
             }
+
+            if (now_selected == null) {
+                ChipUI left_click_chip = GetChipOnLeftMouseClick();
+                if (left_click_chip != null){
+                    if (! left_click_chip.isCPU){
+                        SetDrag(left_click_chip);
+                    }
+
+                    return;
+                }
+            } else {
+                bool is_hide = false;
+
+                // ボタンの機能を発揮してから、非表示にするために2フレーム待機する。
+                var click_info = InputManager.CheckMouseLeftDown(true);
+                if (click_info.isTouch){
+                    List<RaycastResult> results = new List<RaycastResult>();
+                    // マウスポインタの位置にレイ飛ばし、ヒットしたものを保存
+                    // ポインタ（マウス/タッチ）イベントに関連するイベントの情報
+                    var pointer = new PointerEventData(EventSystem.current);
+                    pointer.position = click_info.mousePos;
+                    EventSystem.current.RaycastAll(pointer, results);
+                    // ヒットしたUIの名前
+                    is_hide = results.Count == 0;
+                }
+
+                if (is_hide){
+                    HideChipConfig();
+                    now_selected = null;
+                }
+            }
+
+            ChipUI right_click_chip = GetChipOnRightMouseClick();
+            if (right_click_chip != null){
+                if (! right_click_chip.isCPU){
+                    now_selected = right_click_chip;
+                    ShowChipConfig(now_selected.transform.position);
+                }
+
+                return;
+            }
+        }
+
+        ///<summary> 左クリックによるUI非表示を1フレーム待機してから実行 </summary>
+        private IEnumerator _HideConfigUI(){
+            for (int i = 0; i < 2; i++){
+                yield return null;
+            }
+
+            HideChipConfig();
+            now_selected = null;
+        }
+
+        ///<summary> チップ編集UIを表示して選択中のチップの場所に合わせる </summary>
+        private void ShowChipConfig(Vector3 chip_pos){
+            chip_config.SetActive(true);
+        }
+
+        ///<summary> チップ編集UIを隠す </summary>
+        private void HideChipConfig(){
+            chip_config.SetActive(false);
+        }
+
+        
+        ///<summary> 引数のチップから最も近いチップを探索する。 </summary>
+        private ChipUI FindNearestChipUI(ChipUI chip){
+            Vector3 pos = chip.transform.position;
+
+            float min_distance = float.PositiveInfinity;
+            ChipUI ret = null;
+
+            foreach (var use_chip in useChips){
+                if (use_chip.CheckHit(chip)){
+                    float temp_distance = Vector3.Distance(use_chip.transform.position, pos);
+                    if (temp_distance < min_distance) {
+                        min_distance = temp_distance;
+                        ret = use_chip;
+                    }
+                }
+            }
+
+            return ret;
+        }
+
+        ///<summary> 距離的に付けた側を判定する。 </summary>
+        private Vector3 CalcSettingDirection(Vector3 new_pos, Vector3 old_pos){
+            float dis_x = new_pos.x - old_pos.x;
+            float dis_y = new_pos.y - old_pos.y;
+
+            Vector3 ret = Vector3.one;
+            ret.z = 0;
+
+            // 絶対値が大きい軸のほうにつける。
+            if (Mathf.Abs(dis_x) > Mathf.Abs(dis_y))
+            {
+                if (dis_x < 0){
+                    ret.x = -1;
+                }
+                ret.y = 0;
+            }
+            else
+            {
+                ret.x = 0;
+                if (dis_y < 0){
+                    ret.y = -1;
+                }
+            }
+
+            return ret;
+        }
+
+
+        ///<summary> 設置位置を計算する </summary>
+        private Vector3 CalcSettingPos(Vector3 new_pos, Vector3 old_pos){
+            return CalcSettingDirection(new_pos, old_pos) * EditCircuitUI.DISTANCE_CHIP + old_pos;
         }
     }
 }

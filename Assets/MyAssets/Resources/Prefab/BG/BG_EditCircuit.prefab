@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2373086093429648306}
   - component: {fileID: 2373086093429648307}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BG_EditCircuit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
