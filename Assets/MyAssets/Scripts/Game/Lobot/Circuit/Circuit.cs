@@ -4,6 +4,18 @@ using UnityEngine;
 using Graph;
 
 namespace Lobot{
+    public enum ChipName{
+        CPU,
+        FORWARD_MOVE,
+        BACKWARD_MOVE,
+        LEFT_MOVE,
+        RIGHT_MOVE,
+        GAIN,
+        SOUND,
+        COLOR,
+        BATTERY
+    }
+
     public class Circuit
     {
         private GraphTree tree;
@@ -14,7 +26,7 @@ namespace Lobot{
         public Circuit(){
             tree = new GraphTree();
 
-            var temp = new Node(new CPUChip());
+            var temp = new Node(new CPUChip(ChipName.CPU));
             tree.root = temp;
             tree.now = temp;
 
@@ -22,6 +34,7 @@ namespace Lobot{
             temp.next.Add(
                 new Node(
                     new MoveChip(
+                        ChipName.FORWARD_MOVE,
                         ActionType.FORWARD_MOVE
                     )
                 )
@@ -32,6 +45,7 @@ namespace Lobot{
             temp.next.Add(
                 new Node(
                     new MoveChip(
+                        ChipName.RIGHT_MOVE,
                         ActionType.RIGHT_MOVE
                     )
                 )
@@ -42,6 +56,7 @@ namespace Lobot{
             temp.next.Add(
                 new Node(
                     new MoveChip(
+                        ChipName.BACKWARD_MOVE,
                         ActionType.BACKWARD_MOVE
                     )
                 )
@@ -52,10 +67,15 @@ namespace Lobot{
             temp.next.Add(
                 new Node(
                     new MoveChip(
+                        ChipName.LEFT_MOVE,
                         ActionType.LEFT_MOVE
                     )
                 )
             );
+        }
+
+        public void SetNext(Node parent, ChipName name){
+
         }
 
         public int Execute(){

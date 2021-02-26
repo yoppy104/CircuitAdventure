@@ -7,8 +7,8 @@ namespace Lobot{
     {
         private bool is_sensor_connect = false;
 
-        public CPUChip() : base(ChipType.SYSTEM){
-
+        public CPUChip(ChipName name) : base(name, ChipType.SYSTEM){
+            NumConnectLimit = 4;
         }
 
         public override int Execute()

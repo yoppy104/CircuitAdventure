@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Lobot{
     public class ColorChip : Chip
     {
-        public ColorChip() : base(ChipType.BOOL){
-
+        public ColorChip(ChipName name) : base(name, ChipType.BOOL){
+            NumConnectLimit = 2;
         }
     }
 }

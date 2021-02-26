@@ -5,7 +5,8 @@ namespace Graph{
     public class Node
     {
         public Node prev = null;
-        public List<Node> next = new List<Node>();
+
+        public List<Node> next = new List<Node>(){};
 
         public System.Object content;
 

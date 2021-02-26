@@ -28,7 +28,7 @@ namespace EditCircuit{
         } = new List<ChipUI>();
 
         // CPUチップの基本位置
-        public readonly static Vector3 CPU_STANDARD_POSITION = new Vector3(-1, 0, 0);
+        public readonly static Vector3 CPU_STANDARD_POSITION = new Vector3(-1.25f, 0, 0);
 
         [SerializeField] EventTrigger up_chip_button = null;
         [SerializeField] EventTrigger right_chip_button = null;
@@ -264,7 +264,6 @@ namespace EditCircuit{
             // chipの詳細設定メニュー
             config_delete = chip_config.transform.GetChild(0).GetComponent<Button>();
             config_delete.onClick.AddListener(() => {
-                Debug.Log("check");
                 DisactiveChipUI(now_selected);
                 HideChipConfig();
                 now_selected = null;
@@ -295,6 +294,12 @@ namespace EditCircuit{
                 var temp = factory.GetObject(EditCircuitManager.NAME_DOWN_CHIP, InputManager.MousePosOnWorld(-3), transform);
                 SetDrag(temp.GetComponent<ChipUI>());
             } );
+
+            
+            // CPUChipをセンター配置
+            var temp = factory.GetObject(EditCircuitManager.NAME_CPU_CHIP, EditCircuitUI.CPU_STANDARD_POSITION, transform);
+            var script = temp.GetComponent<ChipUI>();
+            useChips.Add(script);
         }
 
         ///<summary> クリック位置にChipUIがあるかをチェック </summary>
@@ -363,7 +368,6 @@ namespace EditCircuit{
             } else {
                 bool is_hide = false;
 
-                // ボタンの機能を発揮してから、非表示にするために2フレーム待機する。
                 var click_info = InputManager.CheckMouseLeftDown(true);
                 if (click_info.isTouch){
                     List<RaycastResult> results = new List<RaycastResult>();
@@ -379,6 +383,8 @@ namespace EditCircuit{
                 if (is_hide){
                     HideChipConfig();
                     now_selected = null;
+
+                    return;
                 }
             }
 
@@ -386,7 +392,7 @@ namespace EditCircuit{
             if (right_click_chip != null){
                 if (! right_click_chip.isCPU){
                     now_selected = right_click_chip;
-                    ShowChipConfig(now_selected.transform.position);
+                    ShowChipConfig(right_click_chip.transform.position);
                 }
 
                 return;
@@ -406,6 +412,9 @@ namespace EditCircuit{
         ///<summary> チップ編集UIを表示して選択中のチップの場所に合わせる </summary>
         private void ShowChipConfig(Vector3 chip_pos){
             chip_config.SetActive(true);
+            config_delete.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
+                Camera.main, chip_pos + new Vector3(0.8f, 0.8f, 0)
+            );
         }
 
         ///<summary> チップ編集UIを隠す </summary>

@@ -13,7 +13,7 @@ namespace Lobot{
             set;
         } = -1;
 
-        public MoveChip(ActionType _action) : base(ChipType.ACTION){
+        public MoveChip(ChipName name, ActionType _action) : base(name, ChipType.ACTION){
             actionType = (int)_action;
         }
 

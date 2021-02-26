@@ -49,12 +49,6 @@ namespace EditCircuit{
 
             factory.ui_prefabs.Add(NAME_BACK_GROUND, Resources.Load("Prefab/BG/BG_EditCircuit"));
 
-
-            // CPUChipをセンター配置
-            var temp = factory.GetObject(EditCircuitManager.NAME_CPU_CHIP, EditCircuitUI.CPU_STANDARD_POSITION, transform);
-            var script = temp.GetComponent<ChipUI>();
-            ui.useChips.Add(script);
-
             // // UIManagerのドロップ時処理を追加する。
             // ui.SetOnDropChip((chip) => {
 

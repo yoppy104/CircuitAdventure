@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Lobot{
     public class SoundChip : Chip
     {
-        public SoundChip() : base(ChipType.BOOL){
-
+        public SoundChip(ChipName name) : base(name, ChipType.BOOL){
+            NumConnectLimit = 2;
         }
     }
 }

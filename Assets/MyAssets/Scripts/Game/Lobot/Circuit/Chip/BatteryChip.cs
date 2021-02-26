@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Lobot{
     public class BatteryChip : Chip
     {
-        public BatteryChip() : base(ChipType.SYSTEM){
+        public BatteryChip(ChipName name) : base(name, ChipType.SYSTEM){
             
         }
     }

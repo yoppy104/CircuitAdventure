@@ -7,7 +7,7 @@ namespace Lobot{
     ///<summary> ロボットを回転させるアクション </summary>
     public class TurnChip : Chip
     {
-        public TurnChip() : base(ChipType.ACTION){
+        public TurnChip(ChipName name) : base(name, ChipType.ACTION){
 
         }
     }
