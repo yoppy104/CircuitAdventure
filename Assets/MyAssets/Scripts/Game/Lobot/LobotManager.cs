@@ -14,6 +14,9 @@ namespace Lobot{
 
         private GameObject lobot_obj = null;
 
+        [SerializeField] private Vector2Int startPositionOnMap;
+        [SerializeField] private Vector3 startPositinOnWorld;
+
         public Lobot lobot{
             get;
             private set;
@@ -30,45 +33,64 @@ namespace Lobot{
             lobot.Move(dx, dy);
         }
 
+        // ロボットのスタート位置
+        public readonly static Vector3 START_LOBOT_POS = new Vector3(14.79f, -6.66f, 0f);
 
         ///<summary> ロボットオブジェクトのインスタンス化 </summary>
         public void InstanciateLobot(){
-            Debug.Log("instance lobot");
-            
             var prefab = Resources.Load("Prefab/Lobot/Lobot");
 
             // インスタンス化
-            lobot_obj = Instantiate(prefab) as GameObject;
+            lobot_obj = Instantiate(prefab, startPositinOnWorld, Quaternion.identity) as GameObject;
             lobot = lobot_obj.GetComponent<Lobot>();
 
             // 親オブジェクトの設定
-            lobot_obj.transform.parent = this.transform;
+            // lobot_obj.transform.parent = this.transform;
 
-            lobot_obj.transform.position += new Vector3(0f, 0.6f, 0f);
+            lobot.positionOnMap = startPositionOnMap;
 
             lobot.SetCircuit(Common.SharedData.Instance.shared_circuit);
             lobot.GameStart();
         }
 
+        public void Clear(){
+            Debug.Log("Goal");
+        }
+
+        public void Fail(){
+            Debug.Log("Fail");
+        }
 
         public override void onUpdate()
         {
             base.onUpdate();
 
+            // ゴールチェック
+            if (map.GetMapType(lobot.positionOnMap.x, lobot.positionOnMap.y) == MapType.GOAL){
+                Debug.Log("Goal");
+            }
+
             foreach (int action in lobot.action_stack){
 
                 switch (action){
                     case (int)ActionType.FORWARD_MOVE:
-                        MoveLobot(0, 1);
+                        MoveLobot(0, -1);
                         break;
                     case (int)ActionType.BACKWARD_MOVE:
-                        MoveLobot(0, -1);
+                        MoveLobot(0, 1);
                         break;
                     case (int)ActionType.RIGHT_MOVE:
                         MoveLobot(1, 0);
                         break;
                     case (int)ActionType.LEFT_MOVE:
                         MoveLobot(-1, 0);
+                        break;
+                    case (int)ActionType.GAIN:
+                        if (map.GetMapType(lobot.positionOnMap.x, lobot.positionOnMap.y) == MapType.GOAL){
+                            Clear();
+                        }else{
+                            Fail();
+                        }
                         break;
                 }
             }

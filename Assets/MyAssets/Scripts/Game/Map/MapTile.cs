@@ -6,7 +6,8 @@ namespace Map{
         NORMAL,
         DROP,
         COLOR,
-        SOUND
+        SOUND,
+        GOAL
     }
 
     public class MapTile{
@@ -38,6 +39,18 @@ namespace Map{
             set;
         } = null;
 
+        // 色情報
+        public ColorType hasColor{
+            get;
+            set;
+        } = ColorType.BRANK;
+
+
+        // 音情報
+        public SoundType hasSound{
+            get;
+            set;
+        } = SoundType.SILENCE;
 
         ///<summary> プレハブのインスタンス化 </summary>
         public void Generate(Transform parent){

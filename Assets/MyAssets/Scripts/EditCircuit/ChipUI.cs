@@ -200,6 +200,8 @@ namespace EditCircuit{
 
         ///<summary> 起動毎の初期化 </summary>
         public void Init(){
+            AllDisactiveLinkedUI();
+
             next_list.Clear();
             connect_limit = Lobot.LimitConnect.Get(name);
             for (int i = 0; i < connect_limit; i++){
@@ -226,12 +228,49 @@ namespace EditCircuit{
             }
         }
 
+        // 色表示オブジェクトの配列（色限定）
+        private Dictionary<Map.ColorType, GameObject> extra_colors = new Dictionary<Map.ColorType, GameObject>(){
+            {Map.ColorType.BLUE, null},
+            {Map.ColorType.YELLOW, null},
+            {Map.ColorType.GREEN, null}
+        };
+
+        // 現在のモード（色限定）
+        private Map.ColorType now_color = Map.ColorType.RED;
+        private Map.SoundType now_sound = Map.SoundType.BIRD;
+
+        public Map.ColorType nowColor{
+            get { return now_color; }
+        }
+        public Map.SoundType nowSound{
+            get { return now_sound; }
+        }
+
+        // モードを変更する（現状色のみ)
+        public void ChangeMode(Map.ColorType type){
+            if (Name != Lobot.ChipName.COLOR) return;
+            if (now_color == type) return;
+
+            // 表示の切り替え
+            if (now_color != Map.ColorType.RED){
+                extra_colors[now_color].SetActive(false);
+                Debug.Log(now_color);
+            }
+
+            if (type != Map.ColorType.RED){
+                extra_colors[type].SetActive(true);
+            }
+
+            now_color = type;
+            Debug.Log(now_color);
+        }
+
         void Start(){
-            // 四隅の座標リストを作成
-            string[] names = {"down", "left", "right", "up"};
-            int ind = 0;
-            foreach (Transform child in transform){
-                connecter_image.Add(names[ind++], child.gameObject);
+            // 色表示オブジェクトの登録
+            if (Name == Lobot.ChipName.COLOR){
+                extra_colors[Map.ColorType.GREEN] = transform.GetChild(2).gameObject;
+                extra_colors[Map.ColorType.YELLOW] = transform.GetChild(3).gameObject;
+                extra_colors[Map.ColorType.BLUE] = transform.GetChild(4).gameObject;
             }
 
             // EventTriggerを追加

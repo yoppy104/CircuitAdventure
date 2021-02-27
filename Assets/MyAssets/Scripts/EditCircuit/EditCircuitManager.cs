@@ -29,6 +29,9 @@ namespace EditCircuit{
         public const string NAME_RIGHT_CHIP = "MoveChip_Right";
         public const string NAME_LEFT_CHIP = "MoveChip_Left";
         public const string NAME_CPU_CHIP = "CPUChip";
+        public const string NAME_SOUND_CHIP = "SoundChip";
+        public const string NAME_COLOR_CHIP = "ColorChip";
+        public const string NAME_GAIN_CHIP = "GainChip";
         public const string NAME_BACK_GROUND = "BG";
 
         // ui
@@ -53,6 +56,9 @@ namespace EditCircuit{
             factory.ui_prefabs.Add(NAME_UP_CHIP, Resources.Load("Prefab/Lobot/Chip/MoveChip_Up"));
             factory.ui_prefabs.Add(NAME_RIGHT_CHIP, Resources.Load("Prefab/Lobot/Chip/MoveChip_Right"));
             factory.ui_prefabs.Add(NAME_LEFT_CHIP, Resources.Load("Prefab/Lobot/Chip/MoveChip_Left"));
+            factory.ui_prefabs.Add(NAME_SOUND_CHIP, Resources.Load("Prefab/Lobot/Chip/SoundChip"));
+            factory.ui_prefabs.Add(NAME_COLOR_CHIP, Resources.Load("Prefab/Lobot/Chip/ColorChip"));
+            factory.ui_prefabs.Add(NAME_GAIN_CHIP, Resources.Load("Prefab/Lobot/Chip/GainChip"));
 
             factory.ui_prefabs.Add(NAME_BACK_GROUND, Resources.Load("Prefab/BG/BG_EditCircuit"));
 
@@ -83,10 +89,8 @@ namespace EditCircuit{
             //Debug
             foreach(var node in ret.Root.next){
                 if (node == null) {
-                    Debug.Log("[Compile] null");
                     continue;
                 }
-                Debug.Log("[Compile]" + ((Chip)node.content).Name);
             }
 
             return ret;
@@ -94,10 +98,15 @@ namespace EditCircuit{
 
         ///<summary> あとに続くノードを全て追加したノードを返す。 </summary>
         private Node NextAttach(ChipUI chip) {
-            Debug.Log("[NextAttach]" + chip.Name);
-
             // Chipインスタンスを作成して、追加
-            Node ret = new Node(ChipFactory.GetInstance(chip.Name));
+            var instance = ChipFactory.GetInstance(chip.Name);
+            if (chip.Name == ChipName.COLOR){
+                instance.colorType = chip.nowColor;
+            }else if (chip.Name == ChipName.SOUND){
+                instance.soundType = chip.nowSound;
+            }
+
+            Node ret = new Node(instance);
             // nextをnullでうめる
             ret.next.Clear();
             for (int i = 0; i < LimitConnect.Get(chip.Name); i++){

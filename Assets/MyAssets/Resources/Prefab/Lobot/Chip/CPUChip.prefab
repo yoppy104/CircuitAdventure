@@ -209,6 +209,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   is_cpu: 1
   name: 0
+  connect_index: -1
+  parent: {fileID: 0}
+  linked_horizontal: {fileID: 0}
+  linked_vertical: {fileID: 0}
 --- !u!114 &7715883302972411922
 MonoBehaviour:
   m_ObjectHideFlags: 0

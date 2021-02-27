@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Graph;
+using Map;
 
 namespace Lobot{
     public enum ChipName{
@@ -20,8 +21,8 @@ namespace Lobot{
         private const int cpu = 4;
         private const int move = 1;
         private const int gain = 0;
-        private const int sound = 2;
-        private const int color = 2;
+        private const int sound = 1;
+        private const int color = 1;
         
         public static int Get(ChipName name){
             switch(name){
@@ -234,10 +235,8 @@ namespace Lobot{
         }
 
         /// <summary> チップを順番に参照する </summary>
-        public int Execute(){
+        public int Execute(SoundType sound, ColorType color){
             Chip chip = tree.now.content as Chip;
-
-            Debug.Log(chip);
 
             int result = chip.Execute();
             
@@ -248,12 +247,37 @@ namespace Lobot{
                 }
                 return result;
             }
+            
+            // 色チェック
+            else if (chip.Name == ChipName.COLOR){
+                if (result == (int)color){
+                    tree.Next(0);
+                    if (tree.now == null){
+                        tree.Reset();
+                    }
+                }else{
+                    tree.Reset();
+                }
 
-            Debug.Log(result);
+                return -1;
+            }
+
+            // 音声チェック
+            else if (chip.Name == ChipName.SOUND){
+                if (result == (int) sound){
+                    tree.Next(0);
+                    if (tree.now == null){
+                        tree.Reset();
+                    }
+                }else{
+                    tree.Reset();
+                }
+                return -1;
+            }
+
             tree.Next(result);
 
             if (tree.now == null){
-                Debug.Log("null");
                 tree.Reset();
             }
 

@@ -8,5 +8,11 @@ namespace Lobot{
         public ColorChip(ChipName name) : base(name, ChipType.BOOL){
             
         }
+
+        ///<summary> 実行 </summary>
+        public override int Execute()
+        {
+            return (int)colorType;
+        }
     }
 }

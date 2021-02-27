@@ -49,6 +49,16 @@ namespace Lobot{
             set;
         } = null;
 
+        public Map.ColorType colorType{
+            get;
+            set;
+        } = Map.ColorType.BRANK;
+
+        public Map.SoundType soundType{
+            get;
+            set;
+        } = Map.SoundType.SILENCE;
+
         ///<summary> チップの機能を実行する。 </summary>
         public virtual int Execute(){
             return 0;

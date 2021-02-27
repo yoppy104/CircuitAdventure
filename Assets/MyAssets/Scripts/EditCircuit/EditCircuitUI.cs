@@ -34,6 +34,9 @@ namespace EditCircuit{
         [SerializeField] EventTrigger right_chip_button = null;
         [SerializeField] EventTrigger left_chip_button = null;
         [SerializeField] EventTrigger down_chip_button = null;
+        [SerializeField] EventTrigger sound_chip_button = null;
+        [SerializeField] EventTrigger color_chip_button = null;
+        [SerializeField] EventTrigger gain_chip_button = null;
 
         [SerializeField] Button map_button = null;
         [SerializeField] GameObject learge_map_image = null;
@@ -49,6 +52,10 @@ namespace EditCircuit{
         [SerializeField] GameObject chip_config = null;
 
         private Button config_delete = null;
+        private Button config_red = null;
+        private Button config_blue = null;
+        private Button config_yellow = null;
+        private Button config_green = null;
 
 
         public ChipUIFactory factory {
@@ -278,6 +285,13 @@ namespace EditCircuit{
                 }
             }
 
+            // 再接続の可能性を考慮
+            if (now_drag.parent != null){
+                now_drag.parent.Disconnect(now_drag.connect_index);
+                RemoveAll(now_drag);
+                now_drag.Init();
+            }
+
             // 位置を固定
             now_drag.FreezePos();
             
@@ -306,7 +320,7 @@ namespace EditCircuit{
                     }
                 }
             }
-            
+
             // 接続に失敗したら終了
             if (!nearest.Connect(now_drag, index)){
                 // 画面外なので非アクティブ
@@ -367,9 +381,28 @@ namespace EditCircuit{
             // chipの詳細設定メニュー
             config_delete = chip_config.transform.GetChild(0).GetComponent<Button>();
             config_delete.onClick.AddListener(() => {
-                DisactiveChipUI(now_selected);
                 HideChipConfig();
                 now_selected = null;
+            });
+
+            config_red = chip_config.transform.GetChild(1).GetComponent<Button>();
+            config_red.onClick.AddListener(() => {
+                now_selected.ChangeMode(Map.ColorType.RED);
+            });
+
+            config_blue = chip_config.transform.GetChild(2).GetComponent<Button>();
+            config_blue.onClick.AddListener(() => {
+                now_selected.ChangeMode(Map.ColorType.BLUE);
+            });
+
+            config_green = chip_config.transform.GetChild(3).GetComponent<Button>();
+            config_green.onClick.AddListener(() => {
+                now_selected.ChangeMode(Map.ColorType.GREEN);
+            });
+
+            config_yellow = chip_config.transform.GetChild(4).GetComponent<Button>();
+            config_yellow.onClick.AddListener(() => {
+                now_selected.ChangeMode(Map.ColorType.YELLOW);
             });
 
             // ChipUIを生成するボタンの登録
@@ -403,6 +436,30 @@ namespace EditCircuit{
                 if (now_drag != null) return;
 
                 var temp = factory.GetObject(EditCircuitManager.NAME_DOWN_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
+                SetDrag(temp.GetComponent<ChipUI>());
+            } );
+            SetClickDown(sound_chip_button, (data) => {
+                // 左クリックで押していないなら何もしない
+                if (! InputManager.CheckMouseLeft().isTouch) return;
+                if (now_drag != null) return;
+
+                var temp = factory.GetObject(EditCircuitManager.NAME_SOUND_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
+                SetDrag(temp.GetComponent<ChipUI>());
+            } );
+            SetClickDown(color_chip_button, (data) => {
+                // 左クリックで押していないなら何もしない
+                if (! InputManager.CheckMouseLeft().isTouch) return;
+                if (now_drag != null) return;
+
+                var temp = factory.GetObject(EditCircuitManager.NAME_COLOR_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
+                SetDrag(temp.GetComponent<ChipUI>());
+            } );
+            SetClickDown(gain_chip_button, (data) => {
+                // 左クリックで押していないなら何もしない
+                if (! InputManager.CheckMouseLeft().isTouch) return;
+                if (now_drag != null) return;
+
+                var temp = factory.GetObject(EditCircuitManager.NAME_GAIN_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
                 SetDrag(temp.GetComponent<ChipUI>());
             } );
 
@@ -565,26 +622,41 @@ namespace EditCircuit{
             }
         }
 
-        ///<summary> 左クリックによるUI非表示を1フレーム待機してから実行 </summary>
-        private IEnumerator _HideConfigUI(){
-            for (int i = 0; i < 2; i++){
-                yield return null;
-            }
-
-            HideChipConfig();
-            now_selected = null;
-        }
-
         ///<summary> チップ編集UIを表示して選択中のチップの場所に合わせる </summary>
         private void ShowChipConfig(Vector3 chip_pos){
             chip_config.SetActive(true);
             config_delete.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
-                Camera.main, chip_pos + new Vector3(0.8f, 0.8f, 0)
+                Camera.main, chip_pos + new Vector3(1f, 1f, 0)
             );
+            if (now_selected.Name == Lobot.ChipName.COLOR){
+                config_red.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
+                    Camera.main, chip_pos + new Vector3(1f, 0f, 0)
+                );
+                config_blue.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
+                    Camera.main, chip_pos + new Vector3(2f, 0f, 0)
+                );
+                config_red.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
+                    Camera.main, chip_pos + new Vector3(1f, -1f, 0)
+                );
+                config_red.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
+                    Camera.main, chip_pos + new Vector3(2f, -1f, 0)
+                );
+
+                ChangeDisplayColorConfig(true);
+            }
+        }
+
+        // 色変更ボタンの表示を切り替える。
+        private void ChangeDisplayColorConfig(bool flag){
+            config_red.gameObject.SetActive(flag);
+            config_blue.gameObject.SetActive(flag);
+            config_green.gameObject.SetActive(flag);
+            config_yellow.gameObject.SetActive(flag);
         }
 
         ///<summary> チップ編集UIを隠す </summary>
         private void HideChipConfig(){
+            ChangeDisplayColorConfig(false);
             chip_config.SetActive(false);
         }
 
