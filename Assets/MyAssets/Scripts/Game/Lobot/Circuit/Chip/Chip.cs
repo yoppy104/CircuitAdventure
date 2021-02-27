@@ -58,7 +58,7 @@ namespace Lobot{
             type = _type;
             Name = name;
 
-            NumConnectLimit = 1;
+            NumConnectLimit = LimitConnect.Get(name);
         }
 
         // アクティベート

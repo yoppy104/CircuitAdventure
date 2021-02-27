@@ -8,7 +8,7 @@ namespace Lobot{
     public class GainChip : Chip
     {
         public GainChip(ChipName name) : base(name, ChipType.ACTION) {
-            NumConnectLimit = 0;
+            
         }
     }
 }

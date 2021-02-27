@@ -40,6 +40,7 @@ namespace EditCircuit{
         private readonly static Vector2 CORNER_SIZE = new Vector2(0.7f, 0.7f);
         private readonly static Vector2 DRAG_CORNER_SIZE = new Vector2(1.6f, 1.6f);
 
+        
         private Vector2 CornerSize{
             get {
                 if (state == State.STATIC){
@@ -55,6 +56,100 @@ namespace EditCircuit{
         public EventTrigger Trigger{
             get;
             private set;
+        }
+
+        // 扱うチップの名称
+        [SerializeField] private Lobot.ChipName name = Lobot.ChipName.CPU;
+        public Lobot.ChipName Name{
+            get { return name; }
+        }
+
+        private int connect_limit = 0;
+
+        public int numConnect{
+            get;
+            set;
+        } = 0;
+
+        // 接続元のインデックス番号
+        public int connect_index = -1;
+
+        // 接続しているChipUI
+        public List<ChipUI> next_list{
+            get;
+            private set;
+        } = new List<ChipUI>();
+        public ChipUI parent = null;
+
+        ///<summary> 接続する </summary>
+        public bool Connect(ChipUI chip, int index){
+            if (! IsConnectable ) return false;
+            if ( index >= next_list.Count ) return false;
+            if ( index >= connect_limit ) return false;
+
+            if (next_list[index] == null){
+                next_list[index] = chip;
+                chip.parent = this;
+                numConnect++;
+                chip.connect_index = index;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        ///<summary> 非アクティブ化 </summary>
+        public void Disactive(){
+            FreezePos();
+            AllDisactiveLinkedUI();
+
+            if (parent != null){
+                Debug.Log("disconnect");
+                parent.Disconnect(connect_index);
+            }
+            parent = null;
+            connect_index = -1;
+
+            numConnect = 0;
+            next_list.Clear();
+
+            gameObject.SetActive(false);
+        }
+
+        ///<summary> 切断する </summary>
+        public void Disconnect(ChipUI chip){
+            int index = -1;
+            for (int i = 0; i < next_list.Count; i++){
+                if (next_list[i] == chip){
+                    index = 1;
+                    break;
+                }
+            }
+
+            Disconnect(index);
+        }
+
+
+        ///<summary> 切断する </summary>
+        public bool Disconnect(int index){
+            if ( index >= connect_limit ) return false;
+            if ( index >= next_list.Count ) return false;
+
+            var temp = next_list[index];
+            if (next_list[index] != null){
+                next_list[index] = null;
+                temp.parent = null;
+                numConnect--;
+                return true;
+            }
+
+            return false;
+        }
+
+        ///<summary> 接続可能かどうか </summary>
+        public bool IsConnectable{
+            get { return numConnect < connect_limit; }
         }
 
         ///<summary> 四隅の座標を管理 </summary>
@@ -103,10 +198,35 @@ namespace EditCircuit{
             transform.localScale = scale;
         }
 
-        private bool is_initialized = false;
+        ///<summary> 起動毎の初期化 </summary>
         public void Init(){
-            if (is_initialized) return;
+            next_list.Clear();
+            connect_limit = Lobot.LimitConnect.Get(name);
+            for (int i = 0; i < connect_limit; i++){
+                next_list.Add(null);
+            }
 
+            numConnect = 0;
+
+            parent = null;
+            connect_index = -1;
+
+        }
+
+        public Transform linked_horizontal = null;
+        public Transform linked_vertical = null;
+
+        ///<summary> 全ての接続UIを非表示 </summary>
+        public void AllDisactiveLinkedUI(){
+            if (linked_horizontal != null){
+                linked_horizontal.gameObject.SetActive(false);
+            }
+            if (linked_vertical != null){
+                linked_vertical.gameObject.SetActive(false);
+            }
+        }
+
+        void Start(){
             // 四隅の座標リストを作成
             string[] names = {"down", "left", "right", "up"};
             int ind = 0;
@@ -117,11 +237,14 @@ namespace EditCircuit{
             // EventTriggerを追加
             Trigger = GetComponent<EventTrigger>();
 
-            is_initialized = true;
+            linked_vertical = transform.GetChild(0);
+            linked_horizontal = transform.GetChild(1);
+
+            Init();
         }
 
         // Start is called before the first frame update
-        void Start()
+        void OnEnable()
         {
             Init();
         }

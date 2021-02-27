@@ -6,18 +6,21 @@ namespace Lobot{
     public class CPUChip : Chip
     {
         private bool is_sensor_connect = false;
+        private int now_index = -1;
+
+        public void Reset(){
+            now_index = -1;
+        }
 
         public CPUChip(ChipName name) : base(name, ChipType.SYSTEM){
-            NumConnectLimit = 4;
+            
         }
 
         public override int Execute()
         {
-            if (is_sensor_connect){
+            now_index = (now_index + 1) % NumConnectLimit;
 
-            }
-
-            return 0;
+            return now_index;
         }
     }
 }

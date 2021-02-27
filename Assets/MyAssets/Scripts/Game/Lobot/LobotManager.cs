@@ -33,6 +33,8 @@ namespace Lobot{
 
         ///<summary> ロボットオブジェクトのインスタンス化 </summary>
         public void InstanciateLobot(){
+            Debug.Log("instance lobot");
+            
             var prefab = Resources.Load("Prefab/Lobot/Lobot");
 
             // インスタンス化
@@ -43,6 +45,9 @@ namespace Lobot{
             lobot_obj.transform.parent = this.transform;
 
             lobot_obj.transform.position += new Vector3(0f, 0.6f, 0f);
+
+            lobot.SetCircuit(Common.SharedData.Instance.shared_circuit);
+            lobot.GameStart();
         }
 
 

@@ -35,6 +35,11 @@ namespace EditCircuit{
         [SerializeField] EventTrigger left_chip_button = null;
         [SerializeField] EventTrigger down_chip_button = null;
 
+        [SerializeField] Button map_button = null;
+        [SerializeField] GameObject learge_map_image = null;
+
+        [SerializeField] Button game_start_button = null;
+
         public EventTrigger UpChipButton { get { return up_chip_button; }}
         public EventTrigger RightChipButton { get { return right_chip_button; }}
         public EventTrigger LeftChipButton { get { return left_chip_button; }}
@@ -125,8 +130,9 @@ namespace EditCircuit{
 
         ///<summary> チップを非アクティブにする処理 </summary>
         private void DisactiveChipUI(ChipUI chip){
-            chip.FreezePos();
-            chip.gameObject.SetActive(false);
+            RemoveAll(chip);
+            chip.Disactive();
+
             if (onDisactiveChipUI != null){
                 onDisactiveChipUI(chip);
             }
@@ -182,28 +188,32 @@ namespace EditCircuit{
             trigger.triggers.Add(press);
         }
 
-        ///<summary> ドロップしたチップの設置座標を計算する</summary>
-        private Vector3 CalcSetPosition(ChipUI chip){
-            // 最も近いチップを参照する。
-            ChipUI nearest = FindNearestChipUI(chip);
-
-            // 接触したチップが存在しないなら、そのまま返す。
-            if (nearest == null){
-                DisactiveChipUI(chip);
-
-                // なんであれドラッグ状態は解除する。
-                now_drag = null;
-                return Vector3.zero;
+        
+        ///<summary> 解除する </summary>
+        public void Remove(ChipUI target, ChipUI from){
+            int index = -1;
+            for (int i = 0; i < from.next_list.Count; i++){
+                if (target == from.next_list[i]){
+                    index = i;
+                    break;
+                }
             }
 
-            // 最も適した設置方向を計算する。
-            Vector3 set_pos = CalcSettingPos(
-                chip.transform.position,
-                nearest.transform.position
-            );
+            if (index == -1) return;
 
-            return set_pos;
+            if (from.next_list[index] != null){
+                DisactiveChipUI(from.next_list[index]);
+            }
+            from.next_list[index] = null;
         }
+
+        ///<summary> 全てを解除する </summary>
+        public void RemoveAll(ChipUI from){
+            for (int index = 0; index < from.next_list.Count; index++){
+                Remove(from.next_list[index], from);
+            }
+        }
+
 
         ///<summary> チップを離した時の処理 </summary>
         private void DropChip(Vector3 pos){
@@ -214,8 +224,32 @@ namespace EditCircuit{
             // ドロップした座標を設定
             now_drag.SetPosition3D(pos);
 
-            // 配置する座標を計算
-            Vector3 set_pos = CalcSetPosition(now_drag);
+            // 最も近いチップを参照する。
+            ChipUI nearest = FindNearestChipUI(now_drag);
+
+            // 最も近いチップが接続できないなら、終了
+            if (nearest == null || (!nearest.IsConnectable)){
+                DisactiveChipUI(now_drag);
+
+                // なんであれドラッグ状態は解除する。
+                now_drag = null;
+                return;
+            }
+
+            // 接触したチップが存在しないなら、終了
+            if (nearest == null){
+                DisactiveChipUI(now_drag);
+
+                // なんであれドラッグ状態は解除する。
+                now_drag = null;
+                return;
+            }
+
+            // 最も適した設置方向を計算する。
+            Vector3 set_pos = CalcSettingPos(
+                now_drag.transform.position,
+                nearest.transform.position
+            );
 
             // 内部でドラッグ状態が解除されているなら、終了
             if (now_drag == null) return;
@@ -232,11 +266,57 @@ namespace EditCircuit{
                 return;
             }
 
+            // 全く同じ場所にチップが既にあるなら終了
+            foreach (ChipUI use in useChips){
+                if (Vector3.Equals(use.transform.position, now_drag.transform.position)){
+                    // 画面外なので非アクティブ
+                    DisactiveChipUI(now_drag);
+
+                    // なんであれドラッグ状態は解除する。
+                    now_drag = null;
+                    return;
+                }
+            }
+
             // 位置を固定
             now_drag.FreezePos();
             
             // 使用中チップ配列に登録
             useChips.Add(now_drag);
+
+            // 接続UIを表示
+            ShowLinked(now_drag, nearest);
+
+
+            // ChipUIを内部的に接続状態にする
+            int index = 0;
+            if (nearest.isCPU){
+                Vector3 direction = now_drag.transform.position - nearest.transform.position;
+                if (direction.x == 0){
+                    if (direction.y < 0){
+                        index = 2;
+                    }else{
+                        index = 0;
+                    }
+                }else if (direction.y == 0){
+                    if (direction.x < 0){
+                        index = 3;
+                    }else{
+                        index = 1;
+                    }
+                }
+            }
+            
+            // 接続に失敗したら終了
+            if (!nearest.Connect(now_drag, index)){
+                // 画面外なので非アクティブ
+                DisactiveChipUI(now_drag);
+
+                // なんであれドラッグ状態は解除する。
+                now_drag = null;
+                return;
+            }
+
             now_drag = null;
         }
 
@@ -258,9 +338,32 @@ namespace EditCircuit{
             onDropChipFromManager = func;
         }
 
+
+        /// <summary> リンクUIを表示 </summary>
+        public void ShowLinked(ChipUI new_chip, ChipUI pre_chip){
+            Vector3 pos_new = new_chip.transform.position;
+            Vector3 pos_pre = pre_chip.transform.position;
+            Vector3 direction = CalcSettingDirection(pos_new, pos_pre);
+
+            if (direction.x == 0){
+                new_chip.linked_horizontal.gameObject.SetActive(true);
+
+                new_chip.linked_horizontal.transform.position = (pos_new + pos_pre) / 2;
+            }
+
+            else if (direction.y == 0){
+                new_chip.linked_vertical.gameObject.SetActive(true);
+
+                new_chip.linked_vertical.transform.position = (pos_new + pos_pre) / 2;
+            }
+        }
+
         // Start is called before the first frame update
         void Start()
         {
+            chipui_obj = new GameObject("ChipUIs");
+            chipui_obj.transform.parent = transform;
+
             // chipの詳細設定メニュー
             config_delete = chip_config.transform.GetChild(0).GetComponent<Button>();
             config_delete.onClick.AddListener(() => {
@@ -273,34 +376,82 @@ namespace EditCircuit{
             SetClickDown(UpChipButton, (data) => {
                 // 左クリックで押していないなら何もしない
                 if (! InputManager.CheckMouseLeft().isTouch) return;
-               var temp = factory.GetObject(EditCircuitManager.NAME_UP_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                if (now_drag != null) return;
+
+               var temp = factory.GetObject(EditCircuitManager.NAME_UP_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
                 SetDrag(temp.GetComponent<ChipUI>());
             } );
             SetClickDown(RightChipButton, (data) => {
                 // 左クリックで押していないなら何もしない
                 if (! InputManager.CheckMouseLeft().isTouch) return;
-                var temp = factory.GetObject(EditCircuitManager.NAME_RIGHT_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                if (now_drag != null) return;
+
+                var temp = factory.GetObject(EditCircuitManager.NAME_RIGHT_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
                 SetDrag(temp.GetComponent<ChipUI>());
             } );
             SetClickDown(LeftChipButton, (data) => {
                 // 左クリックで押していないなら何もしない
                 if (! InputManager.CheckMouseLeft().isTouch) return;
-                var temp = factory.GetObject(EditCircuitManager.NAME_LEFT_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                if (now_drag != null) return;
+
+                var temp = factory.GetObject(EditCircuitManager.NAME_LEFT_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
                 SetDrag(temp.GetComponent<ChipUI>());
             } );
             SetClickDown(DownChipButton, (data) => {
                 // 左クリックで押していないなら何もしない
                 if (! InputManager.CheckMouseLeft().isTouch) return;
-                var temp = factory.GetObject(EditCircuitManager.NAME_DOWN_CHIP, InputManager.MousePosOnWorld(-3), transform);
+                if (now_drag != null) return;
+
+                var temp = factory.GetObject(EditCircuitManager.NAME_DOWN_CHIP, InputManager.MousePosOnWorld(-3), chipui_obj.transform);
                 SetDrag(temp.GetComponent<ChipUI>());
             } );
 
+            // マップボタンを押したら大きなマップを表示する。
+            map_button.onClick.AddListener(() => {
+                if (learge_map_image != null){
+                    if (!is_erase_frame_lerge_map){
+                        learge_map_image.SetActive(true);
+                    }
+                }
+            });
+
+            // ゲームスタートボタンでシーンをゲームに変更する様にする。
+            game_start_button.onClick.AddListener(() => {
+                // CPUチップをルートにして、コンパイル
+                Compile(useChips[0]);
+
+                // ゲームシーンに移動
+                onChangeGameScene();
+            });
+
             
             // CPUChipをセンター配置
-            var temp = factory.GetObject(EditCircuitManager.NAME_CPU_CHIP, EditCircuitUI.CPU_STANDARD_POSITION, transform);
+            var temp = factory.GetObject(EditCircuitManager.NAME_CPU_CHIP, EditCircuitUI.CPU_STANDARD_POSITION, chipui_obj.transform);
             var script = temp.GetComponent<ChipUI>();
             useChips.Add(script);
         }
+
+        public Action<ChipUI> Compile = null;
+        public Action onChangeGameScene = null;
+
+        // 直線描画コンポーネント用のGameObjectを束ねる。
+        private GameObject chipui_obj = null;
+
+        // 色一覧
+        private Color[] colors = new Color[]{
+            Color.red,
+            Color.yellow,
+            Color.green,
+            Color.blue,
+            Color.cyan,
+            Color.magenta,
+            Color.magenta + Color.cyan,
+            Color.cyan + Color.yellow,
+            Color.yellow + Color.magenta,
+            Color.cyan + Color.blue,
+            Color.magenta + Color.red,
+            Color.green + Color.yellow
+        };
 
         ///<summary> クリック位置にChipUIがあるかをチェック </summary>
         private ChipUI GetChipWithRay(Vector3 mouse_pos){
@@ -341,9 +492,23 @@ namespace EditCircuit{
             return null;
         }
 
+        bool is_erase_frame_lerge_map = false;
+
         // Update is called once per frame
         void Update()
         {
+            // マップ画像が表示されている時の処理
+            is_erase_frame_lerge_map = false;
+            if (learge_map_image.activeSelf){
+                if (InputManager.CheckMouseLeftDown().isTouch){
+                    learge_map_image.SetActive(false);
+                    is_erase_frame_lerge_map = true;
+                }
+
+                return;
+            }
+
+
             if (now_drag != null){
                 // 左クリックを離したら、その場所で固定する。
                 RetMouse ret = InputManager.CheckMouseLeftUp();
@@ -355,6 +520,7 @@ namespace EditCircuit{
 
                 return;
             }
+
 
             if (now_selected == null) {
                 ChipUI left_click_chip = GetChipOnLeftMouseClick();

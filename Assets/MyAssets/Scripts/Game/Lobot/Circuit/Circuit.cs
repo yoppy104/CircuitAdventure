@@ -12,13 +12,52 @@ namespace Lobot{
         RIGHT_MOVE,
         GAIN,
         SOUND,
-        COLOR,
-        BATTERY
+        COLOR
+    }
+
+    /// <summary> チップ毎の接続数上限 </summary>
+    public static class LimitConnect{
+        private const int cpu = 4;
+        private const int move = 1;
+        private const int gain = 0;
+        private const int sound = 2;
+        private const int color = 2;
+        
+        public static int Get(ChipName name){
+            switch(name){
+                case ChipName.CPU:
+                    return cpu;
+
+                case ChipName.FORWARD_MOVE:
+                case ChipName.BACKWARD_MOVE:
+                case ChipName.RIGHT_MOVE:
+                case ChipName.LEFT_MOVE:
+                    return move;
+                
+                case ChipName.GAIN:
+                    return gain;
+
+                case ChipName.SOUND:
+                    return sound;
+                
+                case ChipName.COLOR:
+                    return color;
+            }
+            return 0;
+        }
     }
 
     public class Circuit
     {
         private GraphTree tree;
+
+        public GraphTree Tree{
+            get { return tree; }
+        }
+
+        public Node Root{
+            get { return tree.root; }
+        }
 
         // バッテリーチップは特別枠
         private BatteryChip battery;
@@ -73,7 +112,14 @@ namespace Lobot{
         public Circuit(){
             tree = new GraphTree();
             
-            var temp = new Node(new CPUChip(ChipName.CPU));
+            // rootはCPUで固定
+            var temp = new Node(ChipFactory.GetInstance(ChipName.CPU));
+            // nextをnullでうめる
+            temp.next.Clear();
+            for (int i = 0; i < LimitConnect.Get(ChipName.CPU); i++){
+                temp.next.Add(null);
+            }
+
             tree.root = temp;
             tree.now = temp;
         }
@@ -187,25 +233,31 @@ namespace Lobot{
             return SetNext(parent, chip, index);
         }
 
-
         /// <summary> チップを順番に参照する </summary>
         public int Execute(){
-            var chip = tree.now.content as Chip;
+            Chip chip = tree.now.content as Chip;
+
+            Debug.Log(chip);
 
             int result = chip.Execute();
             
             if (chip.type == ChipType.ACTION){
                 tree.Next(0);
+                if (tree.now == null){
+                    tree.Reset();
+                }
                 return result;
             }
 
+            Debug.Log(result);
             tree.Next(result);
 
-            if (((Chip)tree.now.content).type == ChipType.SYSTEM){
-                return -1;
+            if (tree.now == null){
+                Debug.Log("null");
+                tree.Reset();
             }
 
-            return Execute();
+            return -1;
         }
     }
 }

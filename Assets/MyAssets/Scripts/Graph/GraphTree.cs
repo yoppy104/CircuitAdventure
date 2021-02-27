@@ -25,6 +25,8 @@ namespace Graph{
 
         ///<summary> 参照ノードを次のノードに移動する </summary>
         public bool Next(int id){
+            if (now == null) return false;
+            
             if (id >= now.next.Count){
                 now = root;
                 return false;

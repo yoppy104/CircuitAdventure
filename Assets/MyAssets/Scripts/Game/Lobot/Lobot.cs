@@ -17,6 +17,22 @@ namespace Lobot{
         // 基盤
         private Circuit circuit;
 
+        private bool is_start = false;
+
+        public void GameStart(){
+            is_start = true;
+        }
+
+        public void GameStop(){
+            is_start = false;
+        }
+
+        ///<summary> 基盤の設定 </summary>
+        public void SetCircuit(Circuit set){
+            if (set == null) return;
+            circuit = set;
+        }
+
         public List<int> action_stack{
             get;
             private set;
@@ -39,6 +55,8 @@ namespace Lobot{
 
         ///<summary> 基盤の実行 </summary>
         public void Execute(){
+            if (!is_start) return;
+
             int result = circuit.Execute();
 
             if (result == -1) return;
@@ -67,7 +85,7 @@ namespace Lobot{
         // Start is called before the first frame update
         public override void onStart()
         {
-            circuit = new Circuit();
+            
         }
 
         // Update is called once per frame
