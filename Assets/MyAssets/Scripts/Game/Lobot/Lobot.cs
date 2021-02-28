@@ -15,11 +15,21 @@ namespace Lobot{
 
     public enum LobotState{
         WAIT,
-        MOVE
+        MOVE,
+        LOOK,
+        CHECK_COLOR,
+        CHECK_SOUND
     }
 
     public class Lobot : MyBehaviour 
     {
+        // Analyze Effect
+        [SerializeField] private GameObject sound_effect;
+        [SerializeField] private GameObject red_effect;
+        [SerializeField] private GameObject blue_effect;
+        [SerializeField] private GameObject green_effect;
+        [SerializeField] private GameObject yellow_effect;
+
         // 基盤
         private Circuit circuit;
 
@@ -58,18 +68,61 @@ namespace Lobot{
         ///<summary> 移動 </summary>
         public void Move(int dx, int dy){
             move_delta = new Vector2Int(dx, dy);
-            state = LobotState.MOVE;
         }
 
-        private const int FRAME_FOR_MOVE = 50;
+        ///<summary> 車体の向きを変更する </summary>
+        public void Look(int dx, int dy){
+            // 斜めはありえない
+            if (dx == 0){
+                if (dy > 0){
+                    drotate = new Vector3(0, 0, 180f) - transform.rotation.eulerAngles;
+                }else{
+                    drotate = new Vector3(0, 0, 0) - transform.rotation.eulerAngles;
+                }
+            }else{
+                if (dx > 0){
+                    drotate = new Vector3(0, 0, 270f) - transform.rotation.eulerAngles;
+                }else{
+                    drotate = new Vector3(0, 0, 90f) - transform.rotation.eulerAngles;
+                }
+            }
+            
+            // deltaが270だったら、90に変換する
+            if (drotate.z == 270){
+                drotate.z = -90;
+            }else if (drotate.z == -270){
+                drotate.z = 90;
+            }
+
+            // deltaが360だったら、180に変換する
+            if (drotate.z == 360){
+                drotate.z = -180;
+            }else if (drotate.z == -360){
+                drotate.z = 180;
+            }
+
+            state = LobotState.LOOK;
+        }
+
+        private Vector3 drotate = Vector3.zero;
+
+        public void _Look(){
+            transform.rotation *= Quaternion.Euler(drotate / FRAME_FOR_LOOK * Time.deltaTime);
+        }
+
+        private const float FRAME_FOR_MOVE = 0.7f;  // seconds
+        private const float FRAME_FOR_LOOK = 0.5f;  // seconds
+        private const float FRAME_FOR_COLOR = 1.7f; // seconds
+        private const float FRAME_FOR_SOUND = 1.5f; // seconds
+
         private int frame_count_when_move = 0;
         private Vector2Int move_delta = Vector2Int.zero;
 
         ///<summary> 表示座標を動かす </summary>
         private void _Move(){
             var temp = transform.position;
-            temp.x += DELTA_MOVE_WORLD_POS_X * move_delta.x / FRAME_FOR_MOVE;
-            temp.y += DELTA_MOVE_WORLD_POS_Y * move_delta.y / FRAME_FOR_MOVE;
+            temp.x += DELTA_MOVE_WORLD_POS_X * move_delta.x / FRAME_FOR_MOVE * Time.deltaTime;
+            temp.y += DELTA_MOVE_WORLD_POS_Y * move_delta.y / FRAME_FOR_MOVE * Time.deltaTime;
             transform.position = temp;
         }
 
@@ -77,10 +130,69 @@ namespace Lobot{
         public void FinishMove(){
             // マップ座標を更新
             positionOnMap += new Vector2Int(move_delta.x, move_delta.y);
-
             move_delta = Vector2Int.zero;
-            frame_count_when_move = 0;
+            time_count = 0;
             state = LobotState.WAIT;
+        }
+
+        private void FinishLook(){
+            time_count = 0;
+            state = LobotState.MOVE;
+            drotate = Vector3.zero;
+        }
+
+        private ColorType now_check = ColorType.BRANK;
+
+        public void AnalyzeColor(ColorType type){
+            state = LobotState.CHECK_COLOR;
+
+            switch(type){
+                case ColorType.RED:
+                    red_effect.SetActive(true);
+                    break;
+                case ColorType.BLUE:
+                    blue_effect.SetActive(true);
+                    break;
+                case ColorType.GREEN:
+                    green_effect.SetActive(true);
+                    break;
+                case ColorType.YELLOW:
+                    yellow_effect.SetActive(true);
+                    break;
+            }
+            now_check = type;
+            time_count = 0;
+        }
+
+        private void FinishAnalyzeColor(){
+            state = LobotState.WAIT;
+            switch(now_check){
+                case ColorType.RED:
+                    red_effect.SetActive(false);
+                    break;
+                case ColorType.BLUE:
+                    blue_effect.SetActive(false);
+                    break;
+                case ColorType.GREEN:
+                    green_effect.SetActive(false);
+                    break;
+                case ColorType.YELLOW:
+                    yellow_effect.SetActive(false);
+                    break;
+            }
+            now_check = ColorType.BRANK;
+            time_count = 0;
+        }
+
+
+        public void AnalyzeSound(){
+            state = LobotState.CHECK_SOUND;
+            sound_effect.SetActive(true);
+        }
+
+        private void FinishAnalyzeSound(){
+            state = LobotState.WAIT;
+            sound_effect.SetActive(false);
         }
 
 
@@ -88,9 +200,20 @@ namespace Lobot{
         public void Execute(){
             if (!is_start) return;
 
+            var is_color = circuit.IsColor();
+            var is_sound = circuit.IsSound();
+
             var color = MapManager.Instance.GetColorType(positionOnMap.x, positionOnMap.y);
             var sound = MapManager.Instance.GetSoundType(positionOnMap.x, positionOnMap.y);
             int result = circuit.Execute(sound, color);
+
+            if (is_color != ColorType.BRANK){
+                AnalyzeColor(is_color);
+            }
+
+            if (is_sound){
+                AnalyzeSound();
+            }
 
             if (result == -1) return;
 
@@ -121,7 +244,7 @@ namespace Lobot{
             
         }
 
-        private int frame_count = 0;
+        private float time_count = 0;
 
         // Update is called once per frame
         public override void onUpdate()
@@ -134,9 +257,28 @@ namespace Lobot{
                     break;
                 case LobotState.MOVE:
                     _Move();
-                    frame_count_when_move++;
-                    if (frame_count_when_move == FRAME_FOR_MOVE){
+                    time_count += Time.deltaTime;
+                    if (time_count > FRAME_FOR_MOVE){
                         FinishMove();
+                    }
+                    break;
+                case LobotState.LOOK:
+                    _Look();
+                    time_count += Time.deltaTime;
+                    if (time_count > FRAME_FOR_LOOK){
+                        FinishLook();
+                    }
+                    break;
+                case LobotState.CHECK_COLOR:
+                    time_count += Time.deltaTime;
+                    if (time_count > FRAME_FOR_COLOR){
+                        FinishAnalyzeColor();
+                    }
+                    break;
+                case LobotState.CHECK_SOUND:
+                    time_count += Time.deltaTime;
+                    if (time_count > FRAME_FOR_SOUND){
+                        FinishAnalyzeSound();
                     }
                     break;
             }

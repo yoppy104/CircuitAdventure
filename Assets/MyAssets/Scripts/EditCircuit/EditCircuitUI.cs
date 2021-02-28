@@ -51,12 +51,15 @@ namespace EditCircuit{
 
         [SerializeField] GameObject chip_config = null;
 
+        [SerializeField] GameObject error_dialog = null;
+
         private Button config_delete = null;
         private Button config_red = null;
         private Button config_blue = null;
         private Button config_yellow = null;
         private Button config_green = null;
 
+        private int num_gain_chip = 0;
 
         public ChipUIFactory factory {
             get; set;
@@ -85,6 +88,8 @@ namespace EditCircuit{
             }
 
             RemoveChipUI(chip);
+
+            HideChipConfig();
         }
 
         ///<summary> 使用中チップリストから削除する </summary>
@@ -140,22 +145,26 @@ namespace EditCircuit{
             RemoveAll(chip);
             chip.Disactive();
 
+            if (chip.Name == Lobot.ChipName.GAIN){
+                num_gain_chip--;
+            }
+
             if (onDisactiveChipUI != null){
                 onDisactiveChipUI(chip);
             }
 
             int index = -1;
 
-                for (int ind = 0; ind < useChips.Count; ind++){
-                    if (chip == useChips[ind]){
-                        index = ind;
-                        break;
-                    }
+            for (int ind = 0; ind < useChips.Count; ind++){
+                if (chip == useChips[ind]){
+                    index = ind;
+                    break;
                 }
+            }
 
-                if (index != -1){
-                    useChips.RemoveAt(index);
-                }
+            if (index != -1){
+                useChips.RemoveAt(index);
+            }
         }
 
         // チップを非アクティブにした時に走る処理(Managerから登録すること前提)
@@ -299,7 +308,7 @@ namespace EditCircuit{
             useChips.Add(now_drag);
 
             // 接続UIを表示
-            ShowLinked(now_drag, nearest);
+            Vector3[] linked_info = CalcLinkedUIPos(now_drag, nearest);
 
 
             // ChipUIを内部的に接続状態にする
@@ -323,12 +332,17 @@ namespace EditCircuit{
 
             // 接続に失敗したら終了
             if (!nearest.Connect(now_drag, index)){
-                // 画面外なので非アクティブ
                 DisactiveChipUI(now_drag);
 
                 // なんであれドラッグ状態は解除する。
                 now_drag = null;
                 return;
+            }
+            
+            ShowLinked(now_drag, linked_info);
+
+            if (now_drag.Name == Lobot.ChipName.GAIN){
+                num_gain_chip++;
             }
 
             now_drag = null;
@@ -352,23 +366,22 @@ namespace EditCircuit{
             onDropChipFromManager = func;
         }
 
-
-        /// <summary> リンクUIを表示 </summary>
-        public void ShowLinked(ChipUI new_chip, ChipUI pre_chip){
+        private Vector3[] CalcLinkedUIPos(ChipUI new_chip, ChipUI pre_chip){
             Vector3 pos_new = new_chip.transform.position;
             Vector3 pos_pre = pre_chip.transform.position;
             Vector3 direction = CalcSettingDirection(pos_new, pos_pre);
 
-            if (direction.x == 0){
-                new_chip.linked_horizontal.gameObject.SetActive(true);
+            return new Vector3[] {(pos_new + pos_pre) / 2, direction};
+        }
 
-                new_chip.linked_horizontal.transform.position = (pos_new + pos_pre) / 2;
+        /// <summary> リンクUIを表示 </summary>
+        public void ShowLinked(ChipUI new_chip, Vector3[] info){
+            if (info[1].x == 0){
+                new_chip.ShowLinkedHorizontal(info[0]);
             }
 
-            else if (direction.y == 0){
-                new_chip.linked_vertical.gameObject.SetActive(true);
-
-                new_chip.linked_vertical.transform.position = (pos_new + pos_pre) / 2;
+            else if (info[1].y == 0){
+                new_chip.ShowLinkedVertical(info[0]);
             }
         }
 
@@ -474,6 +487,11 @@ namespace EditCircuit{
 
             // ゲームスタートボタンでシーンをゲームに変更する様にする。
             game_start_button.onClick.AddListener(() => {
+                if (num_gain_chip <= 0){
+                    error_dialog.SetActive(true);
+                    return;
+                }
+
                 // CPUチップをルートにして、コンパイル
                 Compile(useChips[0]);
 
@@ -565,6 +583,13 @@ namespace EditCircuit{
                 return;
             }
 
+            //エラーダイアログを表示しているときの処理
+            if (error_dialog.activeSelf){
+                if (InputManager.CheckMouseLeftDown().isTouch){
+                    error_dialog.SetActive(false);
+                }
+            }
+
 
             if (now_drag != null){
                 // 左クリックを離したら、その場所で固定する。
@@ -635,10 +660,10 @@ namespace EditCircuit{
                 config_blue.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
                     Camera.main, chip_pos + new Vector3(2f, 0f, 0)
                 );
-                config_red.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
+                config_green.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
                     Camera.main, chip_pos + new Vector3(1f, -1f, 0)
                 );
-                config_red.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
+                config_yellow.GetComponent<RectTransform>().position = RectTransformUtility.WorldToScreenPoint(
                     Camera.main, chip_pos + new Vector3(2f, -1f, 0)
                 );
 

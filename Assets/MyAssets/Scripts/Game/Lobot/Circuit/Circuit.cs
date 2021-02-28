@@ -227,6 +227,24 @@ namespace Lobot{
             return true;
         }
 
+        ///<summary> 現在色チップかを調べる。 </summary>
+        public ColorType IsColor(){
+            if (tree.now == null) return ColorType.BRANK;
+
+            if ((tree.now.content as Chip).Name == ChipName.COLOR){
+                return (tree.now.content as ColorChip).colorType;
+            }
+
+            return ColorType.BRANK;
+        }
+
+        ///<summary> 現在音声チップかを調べる </summary>
+        public bool IsSound(){
+            if (tree.now == null) return false;
+
+            return (tree.now.content as Chip).Name == ChipName.SOUND;
+        }
+
 
         ///<summary> 名前からインスタンスを作成して、追加 </summary>
         public bool SetNext(Node parent, ChipName name, int index=0){

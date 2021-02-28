@@ -4,6 +4,7 @@ using UnityEngine;
 using MyInput;
 using UnityEngine.EventSystems;
 using System;
+using UnityEngine.UI;
 
 namespace EditCircuit{
     ///<summary> チップ編集画面でチップを表現するUI </summary>
@@ -58,6 +59,21 @@ namespace EditCircuit{
             private set;
         }
 
+        ///<summary> 水平リンクUIを表示する </summary>
+        public void ShowLinkedHorizontal(Vector3 pos){
+            linked_horizontal.gameObject.SetActive(true);
+            linked_horizontal.GetComponent<SpriteRenderer>().color = line_color[line_index];
+            linked_horizontal.transform.position = pos;
+        }
+
+        ///<summary> 垂直リンクUIを表示する </summary>
+        public void ShowLinkedVertical(Vector3 pos){
+            linked_vertical.gameObject.SetActive(true);
+            Debug.Log(line_color[line_index]);
+            linked_vertical.GetComponent<SpriteRenderer>().color = line_color[line_index];
+            linked_vertical.transform.position = pos;
+        }
+
         // 扱うチップの名称
         [SerializeField] private Lobot.ChipName name = Lobot.ChipName.CPU;
         public Lobot.ChipName Name{
@@ -81,6 +97,11 @@ namespace EditCircuit{
         } = new List<ChipUI>();
         public ChipUI parent = null;
 
+        public int lineIndex{
+            get {return line_index; }
+            set {line_index = value;}
+        }
+
         ///<summary> 接続する </summary>
         public bool Connect(ChipUI chip, int index){
             if (! IsConnectable ) return false;
@@ -88,6 +109,12 @@ namespace EditCircuit{
             if ( index >= connect_limit ) return false;
 
             if (next_list[index] == null){
+                if (isCPU){
+                    chip.lineIndex = index;
+                }else{
+                    chip.lineIndex = lineIndex;
+                }
+
                 next_list[index] = chip;
                 chip.parent = this;
                 numConnect++;
@@ -213,6 +240,7 @@ namespace EditCircuit{
             parent = null;
             connect_index = -1;
 
+            line_index = -1;
         }
 
         public Transform linked_horizontal = null;
@@ -246,6 +274,15 @@ namespace EditCircuit{
             get { return now_sound; }
         }
 
+        // 接続ラインの設定
+        private int line_index = 0;
+        private Color[] line_color = new Color[]{
+            Color.red,
+            Color.blue,
+            Color.yellow,
+            Color.red + Color.blue
+        };
+
         // モードを変更する（現状色のみ)
         public void ChangeMode(Map.ColorType type){
             if (Name != Lobot.ChipName.COLOR) return;
@@ -254,7 +291,6 @@ namespace EditCircuit{
             // 表示の切り替え
             if (now_color != Map.ColorType.RED){
                 extra_colors[now_color].SetActive(false);
-                Debug.Log(now_color);
             }
 
             if (type != Map.ColorType.RED){
@@ -262,7 +298,6 @@ namespace EditCircuit{
             }
 
             now_color = type;
-            Debug.Log(now_color);
         }
 
         void Start(){

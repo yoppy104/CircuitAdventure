@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MainSystem;
 using Map;
+using UnityEngine.SceneManagement;
 
 namespace Lobot{
     public class LobotManager : MyBehaviour
@@ -27,6 +28,8 @@ namespace Lobot{
         public void MoveLobot(int dx, int dy){
             int new_x = lobot.positionOnMap.x + dx;
             int new_y = lobot.positionOnMap.y + dy;
+
+            lobot.Look(dx, dy);
 
             if (! map.IsMoveable(new_x, new_y)) return;
 
@@ -55,20 +58,21 @@ namespace Lobot{
 
         public void Clear(){
             Debug.Log("Goal");
+            Common.SharedData.Instance.is_clear = true;
+
+            SceneManager.LoadScene("Result");
         }
 
         public void Fail(){
             Debug.Log("Fail");
+            Common.SharedData.Instance.is_clear = false;
+
+            SceneManager.LoadScene("Result");
         }
 
         public override void onUpdate()
         {
             base.onUpdate();
-
-            // ゴールチェック
-            if (map.GetMapType(lobot.positionOnMap.x, lobot.positionOnMap.y) == MapType.GOAL){
-                Debug.Log("Goal");
-            }
 
             foreach (int action in lobot.action_stack){
 
