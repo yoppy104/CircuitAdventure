@@ -284,6 +284,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1774884836612732371, guid: 18aafd6b2e61a174cb1b6d15fe96741f,
         type: 3}
+      propertyPath: legend_chip_obj
+      value: 
+      objectReference: {fileID: 30466343}
+    - target: {fileID: 1774884836612732371, guid: 18aafd6b2e61a174cb1b6d15fe96741f,
+        type: 3}
       propertyPath: exit_pos.Array.size
       value: 19
       objectReference: {fileID: 0}
@@ -1051,12 +1056,12 @@ PrefabInstance:
     - target: {fileID: 9176453542412729969, guid: 09f959052340bc6459b7fb9d4feecaf3,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -10.77
+      value: -10.8
       objectReference: {fileID: 0}
     - target: {fileID: 9176453542412729969, guid: 09f959052340bc6459b7fb9d4feecaf3,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.59
+      value: 6.6
       objectReference: {fileID: 0}
     - target: {fileID: 9176453542412729969, guid: 09f959052340bc6459b7fb9d4feecaf3,
         type: 3}

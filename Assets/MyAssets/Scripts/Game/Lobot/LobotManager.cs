@@ -25,7 +25,6 @@ namespace Lobot{
             private set;
         }
 
-
         ///<summary> ロボットの移動 </summary>
         public void MoveLobot(int dx, int dy){
             int new_x = lobot.positionOnMap.x + dx;
@@ -40,6 +39,19 @@ namespace Lobot{
 
         // ロボットのスタート位置
         public readonly static Vector3 START_LOBOT_POS = new Vector3(14.79f, -6.66f, 0f);
+
+        public static Vector3 MapPos2WorldPos(Vector2Int map_pos){
+            var ret = new Vector3 (0, 0, 0);
+            ret.x = Lobot.START_00_POS.x + Lobot.DELTA_MOVE_WORLD_POS_X * map_pos.x;
+            ret.y = Lobot.START_00_POS.y + Lobot.DELTA_MOVE_WORLD_POS_Y * map_pos.y;
+            return ret;
+        }
+
+        public void SetStartPos(){
+            startPositionOnMap = Common.SharedData.Instance.start_pos;
+
+            startPositinOnWorld = MapPos2WorldPos(startPositionOnMap);
+        }
 
         ///<summary> ロボットオブジェクトのインスタンス化 </summary>
         public void InstanciateLobot(){

@@ -65,6 +65,8 @@ namespace Lobot{
         public const float DELTA_MOVE_WORLD_POS_X = 2.84f;
         public const float DELTA_MOVE_WORLD_POS_Y = -2.21f;
 
+        public readonly static Vector3 START_00_POS = new Vector3(-10.8f, 6.6f, 0);
+
         private LobotState state = LobotState.WAIT;
 
         ///<summary> 移動 </summary>

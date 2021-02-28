@@ -26,6 +26,7 @@ namespace Game{
         {
             lobot.map = map;
 
+            lobot.SetStartPos();
             lobot.InstanciateLobot();
         }
 

@@ -36,6 +36,8 @@ namespace Map{
 
         [SerializeField] private Vector2Int goal_pos;
 
+        [SerializeField] private GameObject legend_chip_obj;
+
         private MapTile[,] tiles;
 
         ///<summary> プレイヤー位置の設定 </summary>
@@ -84,8 +86,11 @@ namespace Map{
             
             // タイル配列の初期化
             // ゴール
+            goal_pos = Common.SharedData.Instance.goal_pos;
             var goal = new MapTile(goal_pos.x, goal_pos.y, MapType.GOAL);
             tiles[goal_pos.x, goal_pos.y] = goal;
+
+            legend_chip_obj.transform.position = Lobot.LobotManager.MapPos2WorldPos(goal_pos);
 
 
             // 進入不可タイル

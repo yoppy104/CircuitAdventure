@@ -19,8 +19,6 @@ namespace EditCircuit{
         }
     }
 
-    
-
     ///<summary> 回路編集画面を管理する。 </summary>
     public class EditCircuitManager : MonoBehaviour
     {
@@ -50,6 +48,9 @@ namespace EditCircuit{
             ui = GetComponent<EditCircuitUI>();
             ui.factory = factory;
 
+            RandomSetPosition();
+            ui.SetSGSymbol();
+
             // リソースの読み込み
             factory.ui_prefabs.Add(NAME_CPU_CHIP, Resources.Load("Prefab/Lobot/Chip/CPUChip"));
             factory.ui_prefabs.Add(NAME_DOWN_CHIP, Resources.Load("Prefab/Lobot/Chip/MoveChip_Down"));
@@ -72,6 +73,89 @@ namespace EditCircuit{
             ui.onChangeGameScene = () => {
                 SceneManager.LoadScene("Game");
             };
+        }
+
+        private readonly Vector2Int[] CantSetPosition = new Vector2Int[]{
+            new Vector2Int(8, 0),
+            new Vector2Int(9, 0),
+            new Vector2Int(9, 1),
+            new Vector2Int(9, 2),
+            new Vector2Int(3, 2),
+            new Vector2Int(4, 2),
+            new Vector2Int(5, 2),
+            new Vector2Int(6, 2),
+            new Vector2Int(0, 3),
+            new Vector2Int(6, 3),
+            new Vector2Int(7, 3),
+            new Vector2Int(8, 3),
+            new Vector2Int(0, 4),
+            new Vector2Int(1, 4),
+            new Vector2Int(2, 4),
+            new Vector2Int(7, 4),
+            new Vector2Int(8, 4),
+            new Vector2Int(0, 5),
+            new Vector2Int(1, 5),
+            new Vector2Int(2, 5),
+            new Vector2Int(7, 5),
+            new Vector2Int(8, 5),
+            new Vector2Int(0, 9),
+            new Vector2Int(1, 9),
+            new Vector2Int(2, 9),
+            new Vector2Int(3, 9),
+            new Vector2Int(9, 0),
+            new Vector2Int(7, 2),
+            new Vector2Int(3, 6)
+        };
+
+        ///<summary> ランダムなポジションで設定する。 </summary> 
+        private void RandomSetPosition(){
+            Random.InitState( System.DateTime.Now.Millisecond );
+
+            Vector2Int start_pos = new Vector2Int(0, 0);
+
+            while (true) {
+                start_pos.x = Random.Range(0, 10);
+                start_pos.y = Random.Range(0, 7);
+
+                bool is_break = true;
+                foreach(var pos in CantSetPosition){
+                    if (Vector2Int.Equals(start_pos, pos)){
+                        is_break = false;
+                        break;
+                    }
+                }
+
+                if (is_break){
+                    break;
+                }
+            }
+
+            Vector2Int goal_pos = new Vector2Int(0, 0);
+            while (true) {
+                goal_pos.x = Random.Range(0, 10);
+                goal_pos.y = Random.Range(0, 7);
+
+                bool is_break = true;
+
+                if (Vector2Int.Equals(start_pos, goal_pos)){
+                    continue;
+                }
+
+                is_break = true;
+                foreach(var pos in CantSetPosition){
+                    if (Vector2Int.Equals(goal_pos, pos)){
+                        is_break = false;
+                        break;
+                    }
+                }
+
+                if (is_break){
+                    break;
+                }
+            }
+
+            Common.SharedData.Instance.start_pos = start_pos;
+            Common.SharedData.Instance.goal_pos = goal_pos;
         }
 
         ///<summary> 回路全体をコンパイル </summary>

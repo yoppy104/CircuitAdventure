@@ -43,6 +43,9 @@ namespace EditCircuit{
 
         [SerializeField] Button game_start_button = null;
 
+        [SerializeField] Image start_symbol;
+        [SerializeField] Image goal_symbol;
+
         public EventTrigger UpChipButton { get { return up_chip_button; }}
         public EventTrigger RightChipButton { get { return right_chip_button; }}
         public EventTrigger LeftChipButton { get { return left_chip_button; }}
@@ -90,6 +93,25 @@ namespace EditCircuit{
             RemoveChipUI(chip);
 
             HideChipConfig();
+        }
+
+        private readonly static Vector3 SYMBOL_00_POS = new Vector3(-42f, 37f, 0);
+        private const float DELTA_X = 9.3F;
+        private const float DELTA_Y = -12.4f;
+
+        public void SetSGSymbol(){
+            var start = Common.SharedData.Instance.start_pos;
+            var goal = Common.SharedData.Instance.goal_pos;
+
+            Vector3 start_temp = Vector3.zero;
+            start_temp.x = SYMBOL_00_POS.x + DELTA_X * start.x;
+            start_temp.y = SYMBOL_00_POS.y + DELTA_Y * start.y;
+            start_symbol.GetComponent<RectTransform>().localPosition = start_temp;
+
+            Vector3 goal_temp = Vector3.zero;
+            goal_temp.x = SYMBOL_00_POS.x + DELTA_X * goal.x;
+            goal_temp.y = SYMBOL_00_POS.y + DELTA_Y * goal.y;
+            goal_symbol.GetComponent<RectTransform>().localPosition = goal_temp;
         }
 
         ///<summary> 使用中チップリストから削除する </summary>
