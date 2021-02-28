@@ -18,6 +18,8 @@ namespace Lobot{
         [SerializeField] private Vector2Int startPositionOnMap;
         [SerializeField] private Vector3 startPositinOnWorld;
 
+        [SerializeField] private GameObject legend_chip;
+
         public Lobot lobot{
             get;
             private set;
@@ -51,6 +53,7 @@ namespace Lobot{
             // lobot_obj.transform.parent = this.transform;
 
             lobot.positionOnMap = startPositionOnMap;
+            lobot.legendChip = legend_chip;
 
             lobot.SetCircuit(Common.SharedData.Instance.shared_circuit);
             lobot.GameStart();
@@ -90,11 +93,15 @@ namespace Lobot{
                         MoveLobot(-1, 0);
                         break;
                     case (int)ActionType.GAIN:
-                        if (map.GetMapType(lobot.positionOnMap.x, lobot.positionOnMap.y) == MapType.GOAL){
-                            Clear();
-                        }else{
-                            Fail();
-                        }
+                        lobot.Gain(
+                            map.GetMapType(lobot.positionOnMap.x, lobot.positionOnMap.y),
+                            () => {
+                                Clear();
+                            },
+                            () => {
+                                Fail();
+                            }
+                        );
                         break;
                 }
             }

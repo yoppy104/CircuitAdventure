@@ -989,6 +989,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3314808191769145772, guid: be068f710195726489333e9ad16061d5,
         type: 3}
+      propertyPath: legend_chip
+      value: 
+      objectReference: {fileID: 30466343}
+    - target: {fileID: 3314808191769145772, guid: be068f710195726489333e9ad16061d5,
+        type: 3}
       propertyPath: startPositionOnMap.x
       value: 9
       objectReference: {fileID: 0}

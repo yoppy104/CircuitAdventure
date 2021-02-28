@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using MainSystem;
 using Map;
+using System;
 
 namespace Lobot{
     public enum ActionType{
@@ -18,7 +19,8 @@ namespace Lobot{
         MOVE,
         LOOK,
         CHECK_COLOR,
-        CHECK_SOUND
+        CHECK_SOUND,
+        GAIN
     }
 
     public class Lobot : MyBehaviour 
@@ -69,6 +71,83 @@ namespace Lobot{
         public void Move(int dx, int dy){
             move_delta = new Vector2Int(dx, dy);
         }
+
+        private MapType check_type = MapType.NORMAL;
+        private Action success = null;
+        private Action fail = null;
+        private bool is_clear = false;
+        public void Gain(MapType type, Action onSuccess, Action onFail){
+            is_clear = (type == MapType.GOAL);
+
+            success = onSuccess;
+            fail = onFail;
+
+            state = LobotState.GAIN;
+        }
+
+        public GameObject legendChip{
+            get;
+            set;
+        }
+
+        private int gain_animation_step = 0;
+        private const float GAIN_ANIMATION_EACH_TIME = 0.5f;
+
+        private bool is_set_hop_pos = true;
+        private Vector3 gain_hop;
+
+        private void _Gain(){
+            time_count += Time.deltaTime;
+            if (time_count > GAIN_ANIMATION_EACH_TIME){
+                time_count = 0;
+                gain_animation_step ++;
+
+                if (gain_animation_step == 4){
+                    FinishGain();
+                }
+            }
+
+            switch(gain_animation_step){
+                case 0:
+                    transform.rotation = Quaternion.Euler(new Vector3(0, 0, -45f));
+                    break;
+                case 1:
+                    transform.rotation = Quaternion.Euler(new Vector3(0, 0, 45f));
+                    break;
+                case 2:
+                    transform.rotation = Quaternion.Euler(new Vector3(0, 0, 0));
+                    break;
+                case 3:
+                    if (is_set_hop_pos){
+                        gain_hop = transform.position + new Vector3(0, 1f, 0);
+                        is_set_hop_pos = false;
+                    }
+                    if (is_clear){
+                        legendChip.transform.position = transform.position + new Vector3(0, 1f, 0);
+                        transform.GetComponent<Renderer>().material.color = Color.yellow;
+                        transform.position = gain_hop;
+                    }else{
+                        transform.GetComponent<Renderer>().material.color = Color.blue;
+                    }
+                    break;
+            }
+        }
+
+        private void FinishGain(){
+            time_count = 0;
+            state = LobotState.WAIT;
+            is_set_hop_pos = true;
+            
+            if (is_clear){
+                Debug.Log("success");
+                success();
+            }else{
+                fail();
+                Debug.Log("fail");
+            }
+        }
+
+
 
         ///<summary> 車体の向きを変更する </summary>
         public void Look(int dx, int dy){
@@ -280,6 +359,9 @@ namespace Lobot{
                     if (time_count > FRAME_FOR_SOUND){
                         FinishAnalyzeSound();
                     }
+                    break;
+                case LobotState.GAIN:
+                    _Gain();
                     break;
             }
         }

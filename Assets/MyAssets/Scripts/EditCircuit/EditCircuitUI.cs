@@ -147,6 +147,9 @@ namespace EditCircuit{
 
             if (chip.Name == Lobot.ChipName.GAIN){
                 num_gain_chip--;
+                if (num_gain_chip < 0){
+                    num_gain_chip = 0;
+                }
             }
 
             if (onDisactiveChipUI != null){
