@@ -30,7 +30,7 @@ namespace Common{
         public Circuit shared_circuit = null;
 
         // ステージをクリアしたかどうか
-        public bool is_clear = false;
+        public bool is_clear = true;
 
         public Vector2Int start_pos = new Vector2Int(1,0);
         public Vector2Int goal_pos = Vector2Int.zero;

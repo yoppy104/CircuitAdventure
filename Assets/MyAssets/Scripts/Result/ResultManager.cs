@@ -12,13 +12,18 @@ public class ResultManager : MonoBehaviour
     [SerializeField] GameObject clear;
     [SerializeField] GameObject fail;
 
+    [SerializeField] GameObject clear_image;
+    [SerializeField] GameObject fail_image;
+
     // Start is called before the first frame update
     void Start()
     {
         if (Common.SharedData.Instance.is_clear){
             clear.SetActive(true);
+            clear_image.SetActive(true);
         }else{
             fail.SetActive(true);
+            fail_image.SetActive(true);
         }
         Common.SharedData.Instance.is_clear = false;
 

@@ -175,13 +175,6 @@ namespace Lobot{
                 drotate.z = 90;
             }
 
-            // deltaが360だったら、180に変換する
-            if (drotate.z == 360){
-                drotate.z = -180;
-            }else if (drotate.z == -360){
-                drotate.z = 180;
-            }
-
             state = LobotState.LOOK;
         }
 

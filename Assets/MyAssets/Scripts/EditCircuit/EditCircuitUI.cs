@@ -51,6 +51,12 @@ namespace EditCircuit{
         public EventTrigger LeftChipButton { get { return left_chip_button; }}
         public EventTrigger DownChipButton { get { return down_chip_button; }}
 
+        
+        public bool TutorialMode{
+            get;
+            set;
+        } = false;
+
 
         [SerializeField] GameObject chip_config = null;
 
@@ -503,11 +509,7 @@ namespace EditCircuit{
 
             // マップボタンを押したら大きなマップを表示する。
             map_button.onClick.AddListener(() => {
-                if (learge_map_image != null){
-                    if (!is_erase_frame_lerge_map){
-                        learge_map_image.SetActive(true);
-                    }
-                }
+                DisplayMap(true);
             });
 
             // ゲームスタートボタンでシーンをゲームに変更する様にする。
@@ -529,6 +531,14 @@ namespace EditCircuit{
             var temp = factory.GetObject(EditCircuitManager.NAME_CPU_CHIP, EditCircuitUI.CPU_STANDARD_POSITION, chipui_obj.transform);
             var script = temp.GetComponent<ChipUI>();
             useChips.Add(script);
+        }
+
+        public void DisplayMap(bool flag){
+            if (learge_map_image != null){
+                if (!is_erase_frame_lerge_map){
+                    learge_map_image.SetActive(flag);
+                }
+            }
         }
 
         public Action<ChipUI> Compile = null;
@@ -597,6 +607,11 @@ namespace EditCircuit{
         // Update is called once per frame
         void Update()
         {
+            // チュートリアルモードだったら、Updateを処理しない
+            if (TutorialMode) {
+                return;
+            }
+
             // マップ画像が表示されている時の処理
             is_erase_frame_lerge_map = false;
             if (learge_map_image.activeSelf){
